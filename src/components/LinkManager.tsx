@@ -1,16 +1,13 @@
+
 import { useState, useCallback } from 'react';
 import { useLinks } from '@/hooks/useLinks';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, ExternalLink, Edit, Trash2, BarChart3, Crown, Lock, Calendar, Clock } from 'lucide-react';
+import { Plus, ExternalLink, Edit, Trash2, BarChart3, Crown, Lock, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import LinkForm from './LinkForm';
 
 const LinkManager = () => {
   const { links, loading, updating, createLink, updateLink, deleteLink } = useLinks();
@@ -61,6 +59,12 @@ const LinkManager = () => {
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  const handleCancel = useCallback(() => {
+    setIsCreating(false);
+    setEditingLink(null);
+    resetForm();
+  }, [resetForm]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,131 +125,6 @@ const LinkManager = () => {
   const canAddNewLink = canCreateLink(links.length);
   const remainingLinks = getRemainingLinks(links.length);
 
-  const LinkForm = ({ onSubmit, title }: { onSubmit: (e: React.FormEvent) => void; title: string }) => (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => handleInputChange('title', e.target.value)}
-          placeholder="My awesome link"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="url">URL</Label>
-        <Input
-          id="url"
-          type="url"
-          value={formData.url}
-          onChange={(e) => handleInputChange('url', e.target.value)}
-          placeholder="https://example.com"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="slug">Custom Slug (optional)</Label>
-        <Input
-          id="slug"
-          value={formData.slug}
-          onChange={(e) => handleInputChange('slug', e.target.value)}
-          placeholder="my-link"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
-          placeholder="A brief description of your link"
-          rows={2}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="icon_url">Icon URL (optional)</Label>
-        <Input
-          id="icon_url"
-          type="url"
-          value={formData.icon_url}
-          onChange={(e) => handleInputChange('icon_url', e.target.value)}
-          placeholder="https://example.com/icon.png"
-        />
-      </div>
-
-      {limits.linkSchedulingEnabled && (
-        <div className="space-y-4 p-4 border rounded-lg">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="is_scheduled"
-              checked={formData.is_scheduled}
-              onCheckedChange={(checked) => {
-                handleInputChange('is_scheduled', checked);
-                if (checked) {
-                  handleInputChange('is_active', false);
-                }
-              }}
-            />
-            <Label htmlFor="is_scheduled" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Schedule this link
-            </Label>
-          </div>
-          
-          {formData.is_scheduled && (
-            <div className="space-y-2">
-              <Label htmlFor="scheduled_at">Publish Date & Time</Label>
-              <Input
-                id="scheduled_at"
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) => handleInputChange('scheduled_at', e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                required={formData.is_scheduled}
-              />
-              <p className="text-xs text-muted-foreground">
-                The link will be automatically published at the specified time.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!formData.is_scheduled && (
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is_active"
-            checked={formData.is_active}
-            onCheckedChange={(checked) => handleInputChange('is_active', checked)}
-          />
-          <Label htmlFor="is_active">Active</Label>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-4">
-        <Button type="submit" disabled={updating} className="flex-1">
-          {updating ? 'Saving...' : title}
-        </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => {
-            setIsCreating(false);
-            setEditingLink(null);
-            resetForm();
-          }}
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
-  );
-
   if (loading) {
     return (
       <Card>
@@ -297,7 +176,15 @@ const LinkManager = () => {
                 <DialogTitle>Create New Link</DialogTitle>
                 <DialogDescription>Add a new link to your profile</DialogDescription>
               </DialogHeader>
-              <LinkForm onSubmit={handleCreate} title="Create Link" />
+              <LinkForm 
+                formData={formData}
+                onInputChange={handleInputChange}
+                onSubmit={handleCreate}
+                onCancel={handleCancel}
+                title="Create Link"
+                updating={updating}
+                linkSchedulingEnabled={limits.linkSchedulingEnabled}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -411,7 +298,15 @@ const LinkManager = () => {
             <DialogTitle>Edit Link</DialogTitle>
             <DialogDescription>Update your link information</DialogDescription>
           </DialogHeader>
-          <LinkForm onSubmit={handleUpdate} title="Update Link" />
+          <LinkForm 
+            formData={formData}
+            onInputChange={handleInputChange}
+            onSubmit={handleUpdate}
+            onCancel={handleCancel}
+            title="Update Link"
+            updating={updating}
+            linkSchedulingEnabled={limits.linkSchedulingEnabled}
+          />
         </DialogContent>
       </Dialog>
     </Card>
