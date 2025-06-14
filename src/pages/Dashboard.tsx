@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -123,14 +122,16 @@ const Dashboard = () => {
   };
 
   const getPublicProfileUrl = () => {
-    if (profile?.custom_url) {
-      // For paid plans, use custom domain (when available)
-      if (subscription.subscribed) {
-        return `/${profile.custom_url}`;
-      }
+    // For custom URLs (available for paid plans)
+    if (profile?.custom_url && subscription.subscribed) {
+      return `/${profile.custom_url}`;
     }
-    // For free plan, always use LinkHub subdomain
-    return `https://linkhub.app/${profile?.custom_url || user.id}`;
+    // For usernames (available for all users)
+    if (profile?.username) {
+      return `/${profile.username}`;
+    }
+    // Fallback
+    return `/${user.id}`;
   };
 
   return (
@@ -190,10 +191,10 @@ const Dashboard = () => {
                     <CardDescription>
                       @{profile?.username || 'no-username'}
                     </CardDescription>
-                    {(profile?.custom_url || !subscription.subscribed) && (
+                    {(profile?.custom_url && subscription.subscribed) && (
                       <div className="mt-2">
-                        <Badge variant={subscription.subscribed ? "default" : "secondary"} className="text-xs">
-                          {subscription.subscribed ? `/${profile?.custom_url}` : 'LinkHub URL'}
+                        <Badge variant="default" className="text-xs">
+                          Custom: /{profile.custom_url}
                         </Badge>
                       </div>
                     )}

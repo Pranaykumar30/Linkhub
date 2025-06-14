@@ -42,30 +42,34 @@ const PublicProfile = () => {
 
   useEffect(() => {
     const fetchPublicProfile = async () => {
-      if (!customUrl) return;
+      if (!customUrl) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
 
       try {
-        // First try to find by username (default behavior for linkhub.app/username)
         let profileData = null;
         
-        const { data: usernameProfile } = await supabase
+        // First try to find by custom_url (for paid users)
+        const { data: customUrlProfile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', customUrl)
+          .eq('custom_url', customUrl)
           .single();
 
-        if (usernameProfile) {
-          profileData = usernameProfile;
+        if (customUrlProfile) {
+          profileData = customUrlProfile;
         } else {
-          // If not found by username, try by custom_url (for upgraded plans)
-          const { data: customUrlProfile } = await supabase
+          // If not found by custom_url, try by username
+          const { data: usernameProfile } = await supabase
             .from('profiles')
             .select('*')
-            .eq('custom_url', customUrl)
+            .eq('username', customUrl)
             .single();
           
-          if (customUrlProfile) {
-            profileData = customUrlProfile;
+          if (usernameProfile) {
+            profileData = usernameProfile;
           }
         }
 
@@ -82,10 +86,25 @@ const PublicProfile = () => {
           .from('subscribers')
           .select('subscribed, subscription_tier')
           .eq('user_id', profileData.id)
-          .single();
+          .maybeSingle();
 
         if (subscriptionData) {
           setSubscription(subscriptionData);
+        }
+
+        // Check if user is admin
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('admin_role')
+          .eq('user_id', profileData.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (adminData) {
+          setSubscription({
+            subscribed: true,
+            subscription_tier: 'Enterprise',
+          });
         }
 
         // Get active links for this user
@@ -146,12 +165,13 @@ const PublicProfile = () => {
     return <Badge variant="default" className="text-xs">{subscription.subscription_tier} Plan</Badge>;
   };
 
-  const getPublicUrl = () => {
-    // Show the actual URL being used
-    if (profile?.custom_url && subscription.subscribed && subscription.subscription_tier !== 'Free') {
+  const getDisplayUrl = () => {
+    // Show custom URL if user has it and is on paid plan
+    if (profile?.custom_url && subscription.subscribed) {
       return `linkhub.app/${profile.custom_url}`;
     }
-    return `linkhub.app/${profile?.username || 'user'}`;
+    // Otherwise show username
+    return `linkhub.app/${profile?.username || customUrl}`;
   };
 
   if (loading) {
@@ -206,7 +226,7 @@ const PublicProfile = () => {
           </h1>
           
           <p className="text-muted-foreground mb-3 text-sm">
-            {getPublicUrl()}
+            {getDisplayUrl()}
           </p>
           
           <div className="mb-3">
