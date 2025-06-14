@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +28,7 @@ const SubscriptionManager = () => {
     if (!user) return;
 
     try {
+      // First try to fetch from database
       const { data, error } = await supabase
         .from('subscribers')
         .select('subscribed, subscription_tier, subscription_end')
@@ -36,12 +36,28 @@ const SubscriptionManager = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching subscription:', error);
-        return;
-      }
-
-      if (data) {
+        console.error('Error fetching subscription from DB:', error);
+      } else if (data) {
         setSubscription(data);
+      }
+      
+      // Then call the edge function to verify with Stripe and update if needed
+      try {
+        setLoading(true);
+        const { data: stripeData, error: stripeError } = await supabase.functions.invoke('check-subscription');
+        
+        if (stripeError) {
+          console.error('Error checking subscription with Stripe:', stripeError);
+          toast({
+            title: "Error",
+            description: "Failed to verify subscription status. Please try again.",
+            variant: "destructive",
+          });
+        } else if (stripeData) {
+          setSubscription(stripeData);
+        }
+      } catch (stripeCheckError) {
+        console.error('Error invoking check-subscription function:', stripeCheckError);
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -96,8 +112,51 @@ const SubscriptionManager = () => {
     }
   };
 
+  // Check for URL params after successful checkout
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const checkoutStatus = queryParams.get('checkout');
+    
+    if (checkoutStatus === 'success') {
+      toast({
+        title: "Success!",
+        description: "Your subscription has been activated successfully.",
+      });
+      
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('checkout');
+      window.history.replaceState({}, document.title, url.toString());
+      
+      // Refresh subscription data
+      fetchSubscription();
+    } else if (checkoutStatus === 'cancel') {
+      toast({
+        title: "Checkout Cancelled",
+        description: "You can complete your subscription anytime.",
+        variant: "default",
+      });
+      
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('checkout');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }, []);
+
   useEffect(() => {
     fetchSubscription();
+  }, [user]);
+
+  // Set up periodic refresh of subscription data
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      fetchSubscription();
+    }, 60000); // Check every minute when the tab is active
+    
+    return () => clearInterval(interval);
   }, [user]);
 
   const plans = [
@@ -286,6 +345,21 @@ const SubscriptionManager = () => {
             </Card>
           );
         })}
+      </div>
+
+      {/* Manual Refresh Button */}
+      <div className="flex justify-center">
+        <Button 
+          variant="ghost" 
+          onClick={fetchSubscription}
+          disabled={loading}
+          size="sm"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : null}
+          Refresh Subscription Status
+        </Button>
       </div>
     </div>
   );

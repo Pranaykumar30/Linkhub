@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -8,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink, Home } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import ProfileEditForm from '@/components/ProfileEditForm';
 import AccountSettings from '@/components/AccountSettings';
 import ActivityHistory from '@/components/ActivityHistory';
@@ -20,11 +20,50 @@ import LinkManager from '@/components/LinkManager';
 import Analytics from '@/components/Analytics';
 import SubscriptionManager from '@/components/SubscriptionManager';
 
+interface SubscriptionData {
+  subscribed: boolean;
+  subscription_tier: string | null;
+  subscription_end: string | null;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const { profile, loading, refetchProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [subscription, setSubscription] = useState<SubscriptionData>({
+    subscribed: false,
+    subscription_tier: null,
+    subscription_end: null,
+  });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
+  // Fetch subscription data
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchSubscription = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('subscribers')
+          .select('subscribed, subscription_tier, subscription_end')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching subscription:', error);
+        } else if (data) {
+          setSubscription(data);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
 
   if (!user) {
     return (
@@ -55,17 +94,10 @@ const Dashboard = () => {
     });
   };
 
-  // Mock subscription data - will be replaced with real data when Stripe is integrated
-  const mockSubscription = {
-    subscribed: false,
-    subscription_tier: null,
-    subscription_end: null,
-  };
-
   const getPublicProfileUrl = () => {
     if (profile?.custom_url) {
       // For paid plans, use custom domain (when available)
-      if (mockSubscription.subscribed) {
+      if (subscription.subscribed) {
         return `/${profile.custom_url}`;
       }
     }
@@ -130,10 +162,10 @@ const Dashboard = () => {
                     <CardDescription>
                       @{profile?.username || 'no-username'}
                     </CardDescription>
-                    {(profile?.custom_url || !mockSubscription.subscribed) && (
+                    {(profile?.custom_url || !subscription.subscribed) && (
                       <div className="mt-2">
-                        <Badge variant={mockSubscription.subscribed ? "default" : "secondary"} className="text-xs">
-                          {mockSubscription.subscribed ? `/${profile?.custom_url}` : 'LinkHub URL'}
+                        <Badge variant={subscription.subscribed ? "default" : "secondary"} className="text-xs">
+                          {subscription.subscribed ? `/${profile?.custom_url}` : 'LinkHub URL'}
                         </Badge>
                       </div>
                     )}
@@ -193,7 +225,7 @@ const Dashboard = () => {
                       Edit Profile
                     </Button>
 
-                    {(profile?.custom_url || !mockSubscription.subscribed) && (
+                    {(profile?.custom_url || !subscription.subscribed) && (
                       <Button 
                         asChild
                         className="w-full"
@@ -248,8 +280,8 @@ const Dashboard = () => {
                       
                       <div className="space-y-2">
                         <h4 className="font-medium">Current Plan</h4>
-                        <Badge variant={mockSubscription.subscribed ? "default" : "outline"}>
-                          {mockSubscription.subscription_tier || 'Free'}
+                        <Badge variant={subscription.subscribed ? "default" : "outline"}>
+                          {subscription.subscription_tier || 'Free'}
                         </Badge>
                       </div>
                     </div>
