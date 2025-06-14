@@ -19,52 +19,19 @@ export const useAvatarUpload = () => {
       return null;
     }
 
-    // File size validation (5MB = 5 * 1024 * 1024 bytes)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "File too large",
-        description: "Avatar must be smaller than 5MB. Please choose a smaller file.",
-        variant: "destructive",
-      });
-      return null;
-    }
-
-    // File type validation
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a JPEG, PNG, WebP, or GIF image.",
-        variant: "destructive",
-      });
-      return null;
-    }
-
     setUploading(true);
     try {
-      // Create unique filename with user ID folder structure
+      // Create unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
 
-      // Delete old avatar if it exists
-      const { data: existingFiles } = await supabase.storage
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .list(user.id);
-
-      if (existingFiles && existingFiles.length > 0) {
-        const filesToDelete = existingFiles.map(file => `${user.id}/${file.name}`);
-        await supabase.storage
-          .from('avatars')
-          .remove(filesToDelete);
-      }
-
-      // Upload new file
-      const { error: uploadError, data } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: false
         });
 
       if (uploadError) {
@@ -72,16 +39,16 @@ export const useAvatarUpload = () => {
       }
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       toast({
         title: "Avatar uploaded",
         description: "Your avatar has been successfully uploaded.",
       });
 
-      return urlData.publicUrl;
+      return data.publicUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({
@@ -99,19 +66,25 @@ export const useAvatarUpload = () => {
     if (!user) return false;
 
     try {
-      // Delete all files in user's folder
-      const { data: files } = await supabase.storage
-        .from('avatars')
-        .list(user.id);
+      // Get current avatar URL from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
 
-      if (files && files.length > 0) {
-        const filesToDelete = files.map(file => `${user.id}/${file.name}`);
+      if (profile?.avatar_url) {
+        // Extract file path from URL
+        const url = new URL(profile.avatar_url);
+        const filePath = url.pathname.split('/').slice(-2).join('/'); // Get last two parts of path
+
+        // Delete from storage
         const { error } = await supabase.storage
           .from('avatars')
-          .remove(filesToDelete);
+          .remove([filePath]);
 
         if (error) {
-          console.error('Error deleting files:', error);
+          console.error('Error deleting file:', error);
         }
       }
 

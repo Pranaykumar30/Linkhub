@@ -37,69 +37,61 @@ serve(async (req) => {
     const testUserPassword = "TestUser123!";
     const testUserName = "Enterprise Test User";
 
-    logStep("Checking if user already exists", { email: testUserEmail });
+    logStep("Creating test user", { email: testUserEmail });
 
-    // First check if user already exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers.users.find(user => user.email === testUserEmail);
-
-    let userId: string;
-
-    if (existingUser) {
-      logStep("User already exists, updating subscription", { userId: existingUser.id });
-      userId = existingUser.id;
-      
-      // Update the existing user's subscription
-      await updateSubscription(supabaseAdmin, userId, testUserEmail);
-      
-      return new Response(JSON.stringify({ 
-        message: "Test user already exists and has been updated with Enterprise subscription",
-        email: testUserEmail,
-        password: testUserPassword,
-        userId: userId,
-        instructions: "You can now log in with these credentials to test all Enterprise features"
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    } else {
-      logStep("Creating new test user", { email: testUserEmail });
-
-      // Create the test user
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email: testUserEmail,
-        password: testUserPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: testUserName,
-          username: "enterprise-test"
-        }
-      });
-
-      if (authError) {
-        logStep("Auth error", { error: authError.message });
-        throw authError;
+    // Create the test user
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: testUserEmail,
+      password: testUserPassword,
+      email_confirm: true,
+      user_metadata: {
+        full_name: testUserName,
+        username: "enterprise-test"
       }
+    });
 
-      userId = authData.user.id;
-      logStep("User created successfully", { userId });
-
-      // Update subscription to Enterprise
-      await updateSubscription(supabaseAdmin, userId, testUserEmail);
-
-      logStep("Test user setup completed");
-
-      return new Response(JSON.stringify({ 
-        message: "Test user created successfully with Enterprise subscription",
-        email: testUserEmail,
-        password: testUserPassword,
-        userId: userId,
-        instructions: "You can now log in with these credentials to test all Enterprise features"
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+    if (authError) {
+      logStep("Auth error", { error: authError.message });
+      // If user already exists, try to get the existing user
+      if (authError.message.includes("already registered")) {
+        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = existingUsers.users.find(user => user.email === testUserEmail);
+        if (existingUser) {
+          logStep("Using existing user", { userId: existingUser.id });
+          // Update the existing user's subscription
+          await updateSubscription(supabaseAdmin, existingUser.id, testUserEmail);
+          return new Response(JSON.stringify({ 
+            message: "Test user already exists and has been updated with Enterprise subscription",
+            email: testUserEmail,
+            password: testUserPassword,
+            userId: existingUser.id
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      }
+      throw authError;
     }
+
+    const user = authData.user;
+    logStep("User created successfully", { userId: user.id });
+
+    // Update subscription to Enterprise
+    await updateSubscription(supabaseAdmin, user.id, testUserEmail);
+
+    logStep("Test user setup completed");
+
+    return new Response(JSON.stringify({ 
+      message: "Test user created successfully with Enterprise subscription",
+      email: testUserEmail,
+      password: testUserPassword,
+      userId: user.id,
+      instructions: "You can now log in with these credentials to test all Enterprise features"
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -131,19 +123,13 @@ async function updateSubscription(supabaseAdmin: any, userId: string, email: str
     logStep("Profile created/updated");
   }
 
-  // Delete any existing subscription for this user first
-  await supabaseAdmin
-    .from('subscribers')
-    .delete()
-    .eq('user_id', userId);
-
   // Create/update subscription record with Enterprise privileges
   const subscriptionEnd = new Date();
   subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1); // 1 year from now
 
   const { error: subError } = await supabaseAdmin
     .from('subscribers')
-    .insert({
+    .upsert({
       user_id: userId,
       email: email,
       stripe_customer_id: `test_customer_${userId.slice(0, 8)}`,
@@ -151,12 +137,12 @@ async function updateSubscription(supabaseAdmin: any, userId: string, email: str
       subscription_tier: "Enterprise",
       subscription_end: subscriptionEnd.toISOString(),
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: 'email' });
 
   if (subError) {
     logStep("Subscription error", { error: subError.message });
     throw subError;
   }
 
-  logStep("Subscription created with Enterprise tier");
+  logStep("Subscription updated to Enterprise");
 }
