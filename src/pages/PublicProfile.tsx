@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,49 +96,24 @@ const PublicProfile = () => {
     fetchPublicProfile();
   }, [customUrl]);
 
-  // Set up real-time subscription for link updates
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    const channel = supabase
-      .channel(`public-links-${profile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'links',
-          filter: `user_id=eq.${profile.id}`
-        },
-        (payload) => {
-          console.log('Link updated:', payload);
-          // Update the specific link in our state
-          if (payload.new) {
-            setLinks(prev => prev.map(link => 
-              link.id === payload.new.id 
-                ? { ...link, click_count: payload.new.click_count }
-                : link
-            ));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [profile?.id]);
-
   const handleLinkClick = async (link: PublicLink) => {
-    // Optimistically update the click count
-    setLinks(prev => prev.map(l => 
-      l.id === link.id 
-        ? { ...l, click_count: l.click_count + 1 }
-        : l
-    ));
-
-    // Record the click in the background
+    // Record the click in the background without updating UI
     try {
+      // Get current click count from database
+      const { data: currentLink } = await supabase
+        .from('links')
+        .select('click_count')
+        .eq('id', link.id)
+        .single();
+
+      const newClickCount = (currentLink?.click_count || 0) + 1;
+
+      // Update click count in database
+      await supabase
+        .from('links')
+        .update({ click_count: newClickCount })
+        .eq('id', link.id);
+
       // Record click analytics
       await supabase
         .from('link_clicks')
@@ -149,19 +123,9 @@ const PublicProfile = () => {
           referer: document.referrer,
         });
 
-      // Update click count
-      await supabase
-        .from('links')
-        .update({ click_count: link.click_count + 1 })
-        .eq('id', link.id);
+      console.log('Click recorded successfully');
     } catch (error) {
       console.error('Error recording click:', error);
-      // Revert optimistic update on error
-      setLinks(prev => prev.map(l => 
-        l.id === link.id 
-          ? { ...l, click_count: l.click_count - 1 }
-          : l
-      ));
     }
 
     // Navigate to the link
@@ -380,12 +344,6 @@ const PublicProfile = () => {
                             {link.description}
                           </p>
                         )}
-                        {/* Enhanced click count badge */}
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-black/20 text-white/80 rounded-full backdrop-blur-sm">
-                            {link.click_count} {link.click_count === 1 ? 'click' : 'clicks'}
-                          </span>
-                        </div>
                       </div>
                       
                       {/* Enhanced arrow with animation */}
