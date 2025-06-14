@@ -1,13 +1,36 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Star, Users, Zap, Shield, BarChart3 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to links page
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/links');
+    }
+  }, [user, loading, navigate]);
+
+  // Show loading while checking auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <div className="w-8 h-8 animate-spin border-2 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  // Only show landing page if user is not authenticated
+  if (user) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
@@ -44,20 +67,10 @@ const Index = () => {
             Perfect for social media bios, business cards, and digital networking.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <Button size="lg" className="text-lg px-8">
-                Go to Dashboard
-              </Button>
-            ) : (
-              <>
-                <Button size="lg" className="text-lg px-8">
-                  Get Started Free
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8">
-                  View Demo
-                </Button>
-              </>
-            )}
+            <AuthButton />
+            <Button variant="outline" size="lg" className="text-lg px-8">
+              View Demo
+            </Button>
           </div>
         </div>
       </section>

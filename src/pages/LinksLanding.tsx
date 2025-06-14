@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLinks } from '@/hooks/useLinks';
@@ -6,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExternalLink, Settings, Plus, BarChart3 } from 'lucide-react';
+import { ExternalLink, Settings, Plus, BarChart3, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AuthButton from '@/components/AuthButton';
 

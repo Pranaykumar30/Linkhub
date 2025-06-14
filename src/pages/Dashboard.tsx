@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -7,8 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink } from 'lucide-react';
+import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink, Home } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import ProfileEditForm from '@/components/ProfileEditForm';
 import AccountSettings from '@/components/AccountSettings';
 import ActivityHistory from '@/components/ActivityHistory';
@@ -66,7 +66,15 @@ const Dashboard = () => {
               </div>
               <h1 className="text-xl font-semibold">LinkHub Dashboard</h1>
             </div>
-            <AuthButton />
+            <div className="flex items-center gap-2">
+              <Link to="/links">
+                <Button variant="outline" size="sm">
+                  <Home className="h-4 w-4 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <AuthButton />
+            </div>
           </div>
         </div>
       </header>
