@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -142,27 +143,34 @@ const Index = () => {
             <p className="text-xl text-muted-foreground">Choose the plan that's right for you</p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {[
               {
                 name: "Free",
                 price: "$0",
                 description: "Perfect for getting started",
-                features: ["Up to 5 links", "Basic analytics", "Standard templates", "LinkHub subdomain"],
+                features: ["Up to 5 links", "Basic profile customization", "LinkHub public URL", "Basic analytics"],
                 popular: false
               },
               {
-                name: "Pro",
-                price: "$9",
-                description: "For serious creators",
-                features: ["Unlimited links", "Advanced analytics", "Custom domain", "Priority support", "Custom branding"],
+                name: "Basic",
+                price: "$7.99",
+                description: "Perfect for getting started",
+                features: ["Up to 25 links", "Basic analytics", "Custom profile URL", "Email support", "LinkHub branding"],
+                popular: false
+              },
+              {
+                name: "Premium",
+                price: "$19.99",
+                description: "Most popular choice",
+                features: ["Up to 100 links", "Advanced analytics", "Custom domain support", "Priority support", "Link scheduling", "Custom themes", "Remove LinkHub branding"],
                 popular: true
               },
               {
-                name: "Business",
-                price: "$29",
-                description: "For teams and businesses",
-                features: ["Everything in Pro", "Team collaboration", "White-label solution", "API access", "Custom integrations"],
+                name: "Enterprise",
+                price: "$49.99",
+                description: "For power users and teams",
+                features: ["Unlimited links", "Advanced analytics & exports", "Multiple custom domains", "Team collaboration", "White-label solution", "API access", "Dedicated support", "Custom integrations", "Advanced security features"],
                 popular: false
               }
             ].map((plan, index) => (
@@ -193,7 +201,7 @@ const Index = () => {
                     className="w-full" 
                     variant={plan.popular ? "default" : "outline"}
                   >
-                    Get Started
+                    {plan.name === "Free" ? "Get Started" : `Choose ${plan.name}`}
                   </Button>
                 </CardContent>
               </Card>
