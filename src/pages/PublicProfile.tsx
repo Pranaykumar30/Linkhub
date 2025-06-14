@@ -128,26 +128,43 @@ const PublicProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Stunning Background Art */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+          
+          {/* Floating geometric shapes */}
+          <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-pink-400/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-blue-400/15 to-cyan-600/15 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-br from-yellow-400/25 to-orange-600/25 rounded-full blur-lg animate-pulse delay-500"></div>
+          
+          {/* Subtle grid pattern */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }}></div>
+        </div>
+
         {/* Navigation */}
-        <nav className="border-b bg-white/80 backdrop-blur-lg sticky top-0 z-50">
+        <nav className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
           <div className="container mx-auto px-6 py-4">
-            <LinkHubLogo />
+            <LinkHubLogo className="text-white" />
           </div>
         </nav>
 
-        <div className="container mx-auto px-6 py-16">
+        <div className="relative z-10 container mx-auto px-6 py-16">
           <div className="max-w-2xl mx-auto">
             {/* Loading Profile Header */}
             <div className="text-center mb-12">
-              <Skeleton className="h-40 w-40 rounded-full mx-auto mb-6" />
-              <Skeleton className="h-8 w-64 mx-auto mb-4" />
+              <Skeleton className="h-40 w-40 rounded-full mx-auto mb-6 bg-white/10" />
+              <Skeleton className="h-8 w-64 mx-auto mb-4 bg-white/10" />
             </div>
 
             {/* Loading Links */}
             <div className="space-y-6">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+                <Skeleton key={i} className="h-20 w-full rounded-2xl bg-white/10" />
               ))}
             </div>
           </div>
@@ -158,25 +175,36 @@ const PublicProfile = () => {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Stunning Background Art */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+          
+          {/* Floating geometric shapes */}
+          <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-pink-400/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-blue-400/15 to-cyan-600/15 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-br from-yellow-400/25 to-orange-600/25 rounded-full blur-lg animate-pulse delay-500"></div>
+        </div>
+
         {/* Navigation */}
-        <nav className="border-b bg-white/80 backdrop-blur-lg sticky top-0 z-50">
+        <nav className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
           <div className="container mx-auto px-6 py-4">
-            <LinkHubLogo />
+            <LinkHubLogo className="text-white" />
           </div>
         </nav>
 
-        <div className="container mx-auto px-6 py-16">
+        <div className="relative z-10 container mx-auto px-6 py-16">
           <div className="max-w-2xl mx-auto">
-            <Card className="shadow-2xl border-0 bg-white/70 backdrop-blur-lg">
+            <Card className="shadow-2xl border-0 bg-white/10 backdrop-blur-xl border border-white/20">
               <CardContent className="text-center py-16">
-                <div className="h-20 w-20 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-8">
-                  <User className="h-10 w-10 text-slate-500" />
+                <div className="h-20 w-20 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <User className="h-10 w-10 text-white/80" />
                 </div>
-                <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold mb-4 text-white">
                   Profile Not Found
                 </h1>
-                <p className="text-slate-600 text-lg">
+                <p className="text-white/70 text-lg">
                   The profile you're looking for doesn't exist or has been removed.
                 </p>
               </CardContent>
@@ -188,78 +216,99 @@ const PublicProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Stunning Background Art */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        {/* Background image with overlay */}
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        
+        {/* Floating geometric shapes */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-pink-400/20 to-purple-600/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-blue-400/15 to-cyan-600/15 rounded-full blur-2xl animate-pulse delay-1000"></div>
+        <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-br from-yellow-400/25 to-orange-600/25 rounded-full blur-lg animate-pulse delay-500"></div>
+        <div className="absolute top-1/2 right-1/3 w-24 h-24 bg-gradient-to-br from-green-400/15 to-teal-600/15 rounded-full blur-xl animate-pulse delay-700"></div>
+        
+        {/* Subtle grid pattern overlay */}
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+          backgroundSize: '40px 40px'
+        }}></div>
+        
+        {/* Light rays effect */}
+        <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent transform rotate-12"></div>
+        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white/5 to-transparent transform -rotate-12"></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="border-b bg-white/80 backdrop-blur-lg sticky top-0 z-50">
+      <nav className="relative z-50 border-b border-white/10 bg-black/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
-          <LinkHubLogo />
+          <LinkHubLogo className="text-white" />
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-16">
+      <div className="relative z-10 container mx-auto px-6 py-16">
         <div className="max-w-2xl mx-auto">
-          {/* Profile Header with Floating Card Design */}
+          {/* Profile Header with Glass Morphism Design */}
           <div className="relative mb-16">
-            {/* Background decorative elements */}
-            <div className="absolute -top-8 -left-8 w-32 h-32 bg-gradient-to-br from-indigo-200/30 to-purple-200/30 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-gradient-to-br from-pink-200/30 to-orange-200/30 rounded-full blur-2xl"></div>
-            
-            <Card className="relative shadow-2xl border-0 bg-white/70 backdrop-blur-lg overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+            <Card className="relative shadow-2xl border-0 bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden">
+              {/* Animated top border */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 animate-pulse"></div>
+              
               <CardContent className="text-center py-12 px-8">
                 <div className="relative inline-block mb-6">
-                  <Avatar className="h-40 w-40 shadow-xl ring-4 ring-white/50">
+                  <Avatar className="h-40 w-40 shadow-2xl ring-4 ring-white/30">
                     <AvatarImage src={profile.avatar_url || ''} />
-                    <AvatarFallback className="text-4xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-purple-600 to-pink-600 text-white">
                       {getInitials(profile.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  {/* Floating sparkle */}
-                  <div className="absolute -top-2 -right-2 h-8 w-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                  {/* Floating sparkle with enhanced glow */}
+                  <div className="absolute -top-2 -right-2 h-8 w-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl shadow-yellow-400/50">
                     <Sparkles className="h-4 w-4 text-white" />
                   </div>
                 </div>
                 
-                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold mb-2 text-white drop-shadow-lg">
                   {profile.full_name || 'Welcome'}
                 </h1>
                 
-                {/* Subtle tagline */}
-                <div className="flex items-center justify-center gap-2 text-slate-500">
-                  <div className="h-1 w-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
+                {/* Enhanced tagline */}
+                <div className="flex items-center justify-center gap-2 text-white/80">
+                  <div className="h-1 w-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"></div>
                   <span className="text-sm font-medium">My Links</span>
-                  <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                  <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full"></div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Links with Modern Card Design */}
+          {/* Links with Glass Morphism Design */}
           <div className="space-y-6">
             {links.length === 0 ? (
-              <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-lg">
+              <Card className="shadow-xl border-0 bg-white/10 backdrop-blur-xl border border-white/20">
                 <CardContent className="text-center py-16">
-                  <div className="h-16 w-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <ExternalLink className="h-8 w-8 text-slate-500" />
+                  <div className="h-16 w-16 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <ExternalLink className="h-8 w-8 text-white/80" />
                   </div>
-                  <p className="text-slate-600 text-lg">No links available yet</p>
+                  <p className="text-white/70 text-lg">No links available yet</p>
                 </CardContent>
               </Card>
             ) : (
               links.map((link, index) => (
                 <Card 
                   key={link.id} 
-                  className="group cursor-pointer shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] border-0 bg-white/70 backdrop-blur-lg overflow-hidden animate-fade-in"
+                  className="group cursor-pointer shadow-2xl hover:shadow-pink-500/20 transition-all duration-500 hover:scale-[1.02] border-0 bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden animate-fade-in hover:bg-white/20"
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => handleLinkClick(link)}
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                   <CardContent className="p-8">
                     <div className="flex items-center gap-6">
-                      {/* Icon with gradient background */}
+                      {/* Icon with enhanced styling */}
                       <div className="relative">
                         {link.icon_url ? (
-                          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-lg ring-2 ring-white/50">
+                          <div className="h-16 w-16 rounded-2xl overflow-hidden shadow-2xl ring-2 ring-white/30">
                             <img 
                               src={link.icon_url} 
                               alt="" 
@@ -267,35 +316,35 @@ const PublicProfile = () => {
                             />
                           </div>
                         ) : (
-                          <div className="h-16 w-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-white/50">
+                          <div className="h-16 w-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl ring-2 ring-white/30">
                             <ExternalLink className="h-8 w-8 text-white" />
                           </div>
                         )}
-                        {/* Hover glow effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                        {/* Enhanced hover glow effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-purple-600/30 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-xl text-slate-800 truncate mb-1 group-hover:text-indigo-600 transition-colors duration-300">
+                        <h3 className="font-bold text-xl text-white truncate mb-1 group-hover:text-pink-300 transition-colors duration-300 drop-shadow">
                           {link.title}
                         </h3>
                         {link.description && (
-                          <p className="text-slate-600 truncate text-sm">
+                          <p className="text-white/70 truncate text-sm">
                             {link.description}
                           </p>
                         )}
-                        {/* Click count badge */}
+                        {/* Enhanced click count badge */}
                         <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-full">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-black/20 text-white/80 rounded-full backdrop-blur-sm">
                             {link.click_count} {link.click_count === 1 ? 'click' : 'clicks'}
                           </span>
                         </div>
                       </div>
                       
-                      {/* Arrow with animation */}
+                      {/* Enhanced arrow with animation */}
                       <div className="flex-shrink-0">
-                        <div className="h-12 w-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center group-hover:from-indigo-100 group-hover:to-purple-100 transition-all duration-300">
-                          <ExternalLink className="h-5 w-5 text-slate-600 group-hover:text-indigo-600 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                        <div className="h-12 w-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:bg-white/20 transition-all duration-300 border border-white/20">
+                          <ExternalLink className="h-5 w-5 text-white/80 group-hover:text-white transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
                         </div>
                       </div>
                     </div>
@@ -305,11 +354,11 @@ const PublicProfile = () => {
             )}
           </div>
 
-          {/* Footer with subtle branding */}
+          {/* Enhanced Footer */}
           <div className="text-center mt-16 py-8">
-            <div className="inline-flex items-center gap-2 text-slate-400 text-sm">
+            <div className="inline-flex items-center gap-2 text-white/60 text-sm backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10">
               <span>Powered by</span>
-              <LinkHubLogo className="text-slate-600" showText={true} />
+              <LinkHubLogo className="text-white/80" showText={true} />
             </div>
           </div>
         </div>
