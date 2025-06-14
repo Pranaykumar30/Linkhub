@@ -226,7 +226,7 @@ export const useLinks = () => {
     fetchLinks();
   }, [user]);
 
-  // Set up real-time subscription for links - listen to ALL updates for user's links
+  // Set up real-time subscription for links - always active when user is authenticated
   useEffect(() => {
     if (!user?.id) return;
 
@@ -237,9 +237,6 @@ export const useLinks = () => {
       const channelName = `links-changes-${user.id}-${timestamp}`;
       
       console.log(`Setting up realtime subscription: ${channelName}`);
-      
-      // Get user's link IDs to filter updates
-      const userLinkIds = links.map(link => link.id);
       
       channel = supabase
         .channel(channelName)
@@ -262,10 +259,8 @@ export const useLinks = () => {
         });
     };
 
-    // Only setup subscription if we have links loaded
-    if (links.length > 0) {
-      setupRealtimeSubscription();
-    }
+    // Always setup subscription when user is authenticated
+    setupRealtimeSubscription();
 
     return () => {
       if (channel) {
@@ -273,7 +268,7 @@ export const useLinks = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id, links.length]); // Include links.length to re-setup when links change
+  }, [user?.id]); // Only depend on user.id, not links.length
 
   return {
     links,

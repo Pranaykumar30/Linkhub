@@ -127,7 +127,7 @@ export const useAnalytics = () => {
     fetchAnalytics();
   }, [user]);
 
-  // Set up real-time subscriptions for analytics updates
+  // Set up real-time subscriptions for analytics updates - always active when user is authenticated
   useEffect(() => {
     if (!user?.id) return;
 
@@ -189,6 +189,7 @@ export const useAnalytics = () => {
         });
     };
 
+    // Always setup subscriptions when user is authenticated
     setupRealtimeSubscriptions();
 
     return () => {
@@ -201,7 +202,7 @@ export const useAnalytics = () => {
         supabase.removeChannel(clicksChannel);
       }
     };
-  }, [user?.id]);
+  }, [user?.id]); // Only depend on user.id
 
   return {
     analytics,
