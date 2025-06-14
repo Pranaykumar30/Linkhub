@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Users, Ticket, Settings, Activity, Crown, AlertTriangle } from 'lucide-react';
+import { Shield, Users, Ticket, Settings, Activity, Crown, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import AdminUsersManager from './AdminUsersManager';
 import AdminSupportManager from './AdminSupportManager';
 import AdminActivityLogs from './AdminActivityLogs';
@@ -67,7 +69,13 @@ const AdminDashboard = () => {
               Manage users, subscriptions, and support tickets
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <Link to="/links">
+              <Button variant="outline" className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Go to Links
+              </Button>
+            </Link>
             {getRoleBadge(adminRole || 'support_agent')}
           </div>
         </div>
