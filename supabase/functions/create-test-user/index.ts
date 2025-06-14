@@ -131,13 +131,19 @@ async function updateSubscription(supabaseAdmin: any, userId: string, email: str
     logStep("Profile created/updated");
   }
 
+  // Delete any existing subscription for this user first
+  await supabaseAdmin
+    .from('subscribers')
+    .delete()
+    .eq('user_id', userId);
+
   // Create/update subscription record with Enterprise privileges
   const subscriptionEnd = new Date();
   subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1); // 1 year from now
 
   const { error: subError } = await supabaseAdmin
     .from('subscribers')
-    .upsert({
+    .insert({
       user_id: userId,
       email: email,
       stripe_customer_id: `test_customer_${userId.slice(0, 8)}`,
@@ -145,12 +151,12 @@ async function updateSubscription(supabaseAdmin: any, userId: string, email: str
       subscription_tier: "Enterprise",
       subscription_end: subscriptionEnd.toISOString(),
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
+    });
 
   if (subError) {
     logStep("Subscription error", { error: subError.message });
     throw subError;
   }
 
-  logStep("Subscription updated to Enterprise");
+  logStep("Subscription created with Enterprise tier");
 }

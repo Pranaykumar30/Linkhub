@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useLinks } from '@/hooks/useLinks';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -46,28 +45,44 @@ const PublicProfile = () => {
       if (!customUrl) return;
 
       try {
-        // Get profile by custom URL or user ID (for free plan users)
         let profileData = null;
         
-        // First try to find by custom_url
-        const { data: customUrlProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('custom_url', customUrl)
-          .single();
+        // First try to find by custom_url (for paid plans)
+        if (customUrl !== 'enterprise-test' && !customUrl.includes('-')) {
+          const { data: customUrlProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('custom_url', customUrl)
+            .maybeSingle();
 
-        if (customUrlProfile) {
-          profileData = customUrlProfile;
-        } else {
-          // If not found by custom_url, try by user ID (for free plan LinkHub URLs)
+          if (customUrlProfile) {
+            profileData = customUrlProfile;
+          }
+        }
+
+        // If not found by custom_url, try by user ID (for free plan LinkHub URLs)
+        if (!profileData) {
           const { data: userIdProfile } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', customUrl)
-            .single();
+            .maybeSingle();
           
           if (userIdProfile) {
             profileData = userIdProfile;
+          }
+        }
+
+        // Also try by username as fallback
+        if (!profileData) {
+          const { data: usernameProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('username', customUrl)
+            .maybeSingle();
+          
+          if (usernameProfile) {
+            profileData = usernameProfile;
           }
         }
 
@@ -84,7 +99,7 @@ const PublicProfile = () => {
           .from('subscribers')
           .select('subscribed, subscription_tier')
           .eq('user_id', profileData.id)
-          .single();
+          .maybeSingle();
 
         if (subscriptionData) {
           setSubscription(subscriptionData);
