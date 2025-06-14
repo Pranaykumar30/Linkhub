@@ -11,6 +11,7 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   website: string | null;
+  custom_url: string | null;
   created_at: string;
   updated_at: string;
 }

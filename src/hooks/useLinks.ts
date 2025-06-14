@@ -56,7 +56,7 @@ export const useLinks = () => {
     }
   };
 
-  const createLink = async (linkData: Partial<Link>) => {
+  const createLink = async (linkData: { title: string; url: string; description?: string; icon_url?: string; slug?: string; is_active?: boolean }) => {
     if (!user) return { error: 'No user found' };
 
     setUpdating(true);
@@ -64,7 +64,12 @@ export const useLinks = () => {
       const { data, error } = await supabase
         .from('links')
         .insert({
-          ...linkData,
+          title: linkData.title,
+          url: linkData.url,
+          description: linkData.description || null,
+          icon_url: linkData.icon_url || null,
+          slug: linkData.slug || null,
+          is_active: linkData.is_active ?? true,
           user_id: user.id,
           position: links.length,
         })
