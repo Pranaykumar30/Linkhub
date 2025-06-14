@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import LinksLanding from "./pages/LinksLanding";
 import NotFound from "./pages/NotFound";
 import PublicProfile from "./pages/PublicProfile";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="/links" element={<LinksLanding />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />

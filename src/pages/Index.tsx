@@ -5,7 +5,7 @@ import { Check, Star, Users, Zap, Shield, BarChart3 } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -48,7 +48,9 @@ const Index = () => {
             <a href="#pricing" className="text-muted-foreground hover:text-foreground">Pricing</a>
             <a href="#testimonials" className="text-muted-foreground hover:text-foreground">Reviews</a>
           </nav>
-          <AuthButton />
+          <Link to="/auth">
+            <Button>Sign In</Button>
+          </Link>
         </div>
       </header>
 
@@ -67,10 +69,16 @@ const Index = () => {
             Perfect for social media bios, business cards, and digital networking.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <AuthButton />
-            <Button variant="outline" size="lg" className="text-lg px-8">
-              View Demo
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" className="text-lg px-8">
+                Get Started
+              </Button>
+            </Link>
+            <Link to="/demo">
+              <Button variant="outline" size="lg" className="text-lg px-8">
+                View Demo
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
