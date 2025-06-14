@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLinks } from '@/hooks/useLinks';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +44,7 @@ const LinkManager = () => {
     is_scheduled: false,
   });
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       title: '',
       url: '',
@@ -56,7 +56,11 @@ const LinkManager = () => {
       is_scheduled: false,
     });
     setEditingLink(null);
-  };
+  }, []);
+
+  const handleInputChange = useCallback((field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +98,7 @@ const LinkManager = () => {
     }
   };
 
-  const handleEdit = (link: any) => {
+  const handleEdit = useCallback((link: any) => {
     setEditingLink(link);
     setFormData({
       title: link.title || '',
@@ -106,7 +110,7 @@ const LinkManager = () => {
       scheduled_at: link.scheduled_at ? new Date(link.scheduled_at).toISOString().slice(0, 16) : '',
       is_scheduled: Boolean(link.is_scheduled),
     });
-  };
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this link?')) {
@@ -124,7 +128,7 @@ const LinkManager = () => {
         <Input
           id="title"
           value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => handleInputChange('title', e.target.value)}
           placeholder="My awesome link"
           required
         />
@@ -136,7 +140,7 @@ const LinkManager = () => {
           id="url"
           type="url"
           value={formData.url}
-          onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+          onChange={(e) => handleInputChange('url', e.target.value)}
           placeholder="https://example.com"
           required
         />
@@ -147,7 +151,7 @@ const LinkManager = () => {
         <Input
           id="slug"
           value={formData.slug}
-          onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+          onChange={(e) => handleInputChange('slug', e.target.value)}
           placeholder="my-link"
         />
       </div>
@@ -157,7 +161,7 @@ const LinkManager = () => {
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) => handleInputChange('description', e.target.value)}
           placeholder="A brief description of your link"
           rows={2}
         />
@@ -169,7 +173,7 @@ const LinkManager = () => {
           id="icon_url"
           type="url"
           value={formData.icon_url}
-          onChange={(e) => setFormData(prev => ({ ...prev, icon_url: e.target.value }))}
+          onChange={(e) => handleInputChange('icon_url', e.target.value)}
           placeholder="https://example.com/icon.png"
         />
       </div>
@@ -180,11 +184,12 @@ const LinkManager = () => {
             <Switch
               id="is_scheduled"
               checked={formData.is_scheduled}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                is_scheduled: checked,
-                is_active: checked ? false : prev.is_active 
-              }))}
+              onCheckedChange={(checked) => {
+                handleInputChange('is_scheduled', checked);
+                if (checked) {
+                  handleInputChange('is_active', false);
+                }
+              }}
             />
             <Label htmlFor="is_scheduled" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -199,7 +204,7 @@ const LinkManager = () => {
                 id="scheduled_at"
                 type="datetime-local"
                 value={formData.scheduled_at}
-                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                onChange={(e) => handleInputChange('scheduled_at', e.target.value)}
                 min={new Date().toISOString().slice(0, 16)}
                 required={formData.is_scheduled}
               />
@@ -216,7 +221,7 @@ const LinkManager = () => {
           <Switch
             id="is_active"
             checked={formData.is_active}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+            onCheckedChange={(checked) => handleInputChange('is_active', checked)}
           />
           <Label htmlFor="is_active">Active</Label>
         </div>
