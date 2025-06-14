@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useProfile } from '@/hooks/useProfile';
+import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -33,6 +34,7 @@ interface ProfileEditFormProps {
 
 const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
   const { updateProfile, updating } = useProfile();
+  const { uploadAvatar, removeAvatar, uploading } = useAvatarUpload();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     username: profile?.username || '',
@@ -47,6 +49,36 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, WebP, or GIF)');
+      return;
+    }
+
+    const avatarUrl = await uploadAvatar(file);
+    if (avatarUrl) {
+      setFormData(prev => ({ ...prev, avatar_url: avatarUrl }));
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    const success = await removeAvatar();
+    if (success) {
+      setFormData(prev => ({ ...prev, avatar_url: '' }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,16 +130,30 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
             </Avatar>
             
             <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" disabled>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Photo
-              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={uploading}
+                />
+                <Button type="button" variant="outline" size="sm" disabled={uploading}>
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  {uploading ? 'Uploading...' : 'Upload Photo'}
+                </Button>
+              </div>
               {formData.avatar_url && (
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, avatar_url: '' }))}
+                  onClick={handleRemoveAvatar}
+                  disabled={uploading}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -166,7 +212,7 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button type="submit" disabled={updating} className="flex-1">
+            <Button type="submit" disabled={updating || uploading} className="flex-1">
               {updating ? 'Saving...' : 'Save Changes'}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
