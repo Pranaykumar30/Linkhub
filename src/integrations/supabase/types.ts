@@ -133,37 +133,55 @@ export type Database = {
       }
       subscribers: {
         Row: {
+          advanced_analytics_enabled: boolean | null
+          api_access_enabled: boolean | null
           created_at: string
+          custom_domain_enabled: boolean | null
           email: string
           id: string
+          link_limit: number | null
           stripe_customer_id: string | null
           subscribed: boolean
           subscription_end: string | null
           subscription_tier: string | null
+          team_collaboration_enabled: boolean | null
           updated_at: string
           user_id: string | null
+          white_label_enabled: boolean | null
         }
         Insert: {
+          advanced_analytics_enabled?: boolean | null
+          api_access_enabled?: boolean | null
           created_at?: string
+          custom_domain_enabled?: boolean | null
           email: string
           id?: string
+          link_limit?: number | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          team_collaboration_enabled?: boolean | null
           updated_at?: string
           user_id?: string | null
+          white_label_enabled?: boolean | null
         }
         Update: {
+          advanced_analytics_enabled?: boolean | null
+          api_access_enabled?: boolean | null
           created_at?: string
+          custom_domain_enabled?: boolean | null
           email?: string
           id?: string
+          link_limit?: number | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          team_collaboration_enabled?: boolean | null
           updated_at?: string
           user_id?: string | null
+          white_label_enabled?: boolean | null
         }
         Relationships: []
       }

@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useLinks } from '@/hooks/useLinks';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, ExternalLink, Edit, Trash2, BarChart3 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, ExternalLink, Edit, Trash2, BarChart3, Crown, Lock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,7 @@ import {
 
 const LinkManager = () => {
   const { links, loading, updating, createLink, updateLink, deleteLink } = useLinks();
+  const { limits, canCreateLink, getRemainingLinks } = useSubscriptionLimits();
   const [isCreating, setIsCreating] = useState(false);
   const [editingLink, setEditingLink] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -54,6 +57,11 @@ const LinkManager = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!canCreateLink(links.length)) {
+      return; // This shouldn't happen due to UI disabled state, but safety check
+    }
+    
     const { error } = await createLink(formData);
     if (!error) {
       setIsCreating(false);
@@ -89,6 +97,9 @@ const LinkManager = () => {
       await deleteLink(id);
     }
   };
+
+  const canAddNewLink = canCreateLink(links.length);
+  const remainingLinks = getRemainingLinks(links.length);
 
   const LinkForm = ({ onSubmit, title }: { onSubmit: (e: React.FormEvent) => void; title: string }) => (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -200,31 +211,68 @@ const LinkManager = () => {
           <CardTitle>Link Management</CardTitle>
           <CardDescription>Manage your links and track their performance</CardDescription>
         </div>
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Link
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Link</DialogTitle>
-              <DialogDescription>Add a new link to your profile</DialogDescription>
-            </DialogHeader>
-            <LinkForm onSubmit={handleCreate} title="Create Link" />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-4">
+          {/* Link limit indicator */}
+          <div className="text-right">
+            <div className="text-sm font-medium">
+              {links.length} / {limits.linkLimit === -1 ? '∞' : limits.linkLimit} links
+            </div>
+            {remainingLinks !== -1 && (
+              <div className="text-xs text-muted-foreground">
+                {remainingLinks} remaining
+              </div>
+            )}
+          </div>
+          
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button disabled={!canAddNewLink}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Link
+                {!canAddNewLink && <Lock className="h-4 w-4 ml-2" />}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Link</DialogTitle>
+                <DialogDescription>Add a new link to your profile</DialogDescription>
+              </DialogHeader>
+              <LinkForm onSubmit={handleCreate} title="Create Link" />
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
 
       <CardContent>
+        {/* Link limit warning */}
+        {!canAddNewLink && (
+          <Alert className="mb-4">
+            <Crown className="h-4 w-4" />
+            <AlertDescription>
+              You've reached your link limit of {limits.linkLimit} links. 
+              {limits.subscriptionTier ? ' Upgrade your plan to add more links.' : ' Upgrade to a paid plan to add more links.'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {links.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No links yet. Create your first link!</p>
-            <Button onClick={() => setIsCreating(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Link
-            </Button>
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                <ExternalLink className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No links yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start by adding your first link to share with others.
+                </p>
+                <Button onClick={() => setIsCreating(true)} disabled={!canAddNewLink}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Link
+                  {!canAddNewLink && <Lock className="h-4 w-4 ml-2" />}
+                </Button>
+              </div>
+            </div>
           </div>
         ) : (
           <Table>
