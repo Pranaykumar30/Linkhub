@@ -6,25 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, MapPin, Briefcase, Calendar } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const ExtendedProfileForm = () => {
   const { profile, updateProfile, updating } = useProfile();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
-    phone: '',
-    location: '',
-    company: '',
-    job_title: '',
-    linkedin_url: '',
-    twitter_url: '',
-    github_url: '',
-    timezone: '',
-    language: 'en',
-    date_of_birth: '',
+    full_name: profile?.full_name || '',
+    username: profile?.username || '',
+    bio: profile?.bio || '',
+    website: profile?.website || '',
+    custom_url: profile?.custom_url || '',
   });
 
-  const handleChange = (name: string, value: string) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -33,162 +29,121 @@ const ExtendedProfileForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Note: These fields would need to be added to the database schema
-    // For now, this is just the UI structure
-    console.log('Extended profile data:', formData);
+    
+    // Validate custom URL
+    if (formData.custom_url && !/^[a-zA-Z0-9-_]+$/.test(formData.custom_url)) {
+      toast({
+        title: "Invalid custom URL",
+        description: "Custom URL can only contain letters, numbers, hyphens, and underscores.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Clean up website URL
+    let website = formData.website.trim();
+    if (website && !website.startsWith('http://') && !website.startsWith('https://')) {
+      website = `https://${website}`;
+    }
+
+    const updates = {
+      ...formData,
+      website: website || null,
+      full_name: formData.full_name.trim() || null,
+      username: formData.username.trim() || null,
+      bio: formData.bio.trim() || null,
+      custom_url: formData.custom_url.trim() || null,
+    };
+
+    const { error } = await updateProfile(updates);
+    if (!error) {
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Extended Profile
-        </CardTitle>
+        <CardTitle>Extended Profile Settings</CardTitle>
         <CardDescription>
-          Additional information to complete your profile
+          Customize your profile information and public page settings.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Contact Information */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Contact Information</h4>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => handleChange('location', e.target.value)}
-                  placeholder="San Francisco, CA"
-                />
-              </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleChange}
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Enter your username"
+              />
             </div>
           </div>
 
-          {/* Professional Information */}
-          <div className="space-y-4">
-            <h4 className="font-medium flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              Professional Information
-            </h4>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) => handleChange('company', e.target.value)}
-                  placeholder="Your company name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="job_title">Job Title</Label>
-                <Input
-                  id="job_title"
-                  value={formData.job_title}
-                  onChange={(e) => handleChange('job_title', e.target.value)}
-                  placeholder="Software Engineer"
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              placeholder="Tell us a bit about yourself"
+              rows={3}
+            />
           </div>
 
-          {/* Social Links */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Social Links</h4>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="linkedin_url">LinkedIn</Label>
-                <Input
-                  id="linkedin_url"
-                  value={formData.linkedin_url}
-                  onChange={(e) => handleChange('linkedin_url', e.target.value)}
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="twitter_url">Twitter</Label>
-                <Input
-                  id="twitter_url"
-                  value={formData.twitter_url}
-                  onChange={(e) => handleChange('twitter_url', e.target.value)}
-                  placeholder="https://twitter.com/username"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="github_url">GitHub</Label>
-                <Input
-                  id="github_url"
-                  value={formData.github_url}
-                  onChange={(e) => handleChange('github_url', e.target.value)}
-                  placeholder="https://github.com/username"
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              name="website"
+              type="url"
+              value={formData.website}
+              onChange={handleChange}
+              placeholder="https://your-website.com"
+            />
           </div>
 
-          {/* Preferences */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Preferences</h4>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="timezone">Timezone</Label>
-                <Select value={formData.timezone} onValueChange={(value) => handleChange('timezone', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UTC">UTC</SelectItem>
-                    <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                    <SelectItem value="America/Chicago">Central Time</SelectItem>
-                    <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                    <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                    <SelectItem value="Europe/London">London</SelectItem>
-                    <SelectItem value="Europe/Paris">Paris</SelectItem>
-                    <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select value={formData.language} onValueChange={(value) => handleChange('language', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Spanish</SelectItem>
-                    <SelectItem value="fr">French</SelectItem>
-                    <SelectItem value="de">German</SelectItem>
-                    <SelectItem value="it">Italian</SelectItem>
-                    <SelectItem value="pt">Portuguese</SelectItem>
-                    <SelectItem value="ja">Japanese</SelectItem>
-                    <SelectItem value="ko">Korean</SelectItem>
-                    <SelectItem value="zh">Chinese</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="custom_url">Custom URL</Label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-muted bg-muted text-muted-foreground text-sm">
+                yourdomain.com/
+              </span>
+              <Input
+                id="custom_url"
+                name="custom_url"
+                value={formData.custom_url}
+                onChange={handleChange}
+                placeholder="your-custom-url"
+                className="rounded-l-none"
+              />
             </div>
+            <p className="text-xs text-muted-foreground">
+              Choose a custom URL for your public profile. Only letters, numbers, hyphens, and underscores allowed.
+            </p>
           </div>
 
           <Button type="submit" disabled={updating} className="w-full">
-            {updating ? 'Saving...' : 'Save Extended Profile'}
+            {updating ? 'Saving...' : 'Save Changes'}
           </Button>
         </form>
       </CardContent>

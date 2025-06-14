@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus } from 'lucide-react';
+import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import ProfileEditForm from '@/components/ProfileEditForm';
 import AccountSettings from '@/components/AccountSettings';
@@ -15,6 +14,9 @@ import ActivityHistory from '@/components/ActivityHistory';
 import NotificationSettings from '@/components/NotificationSettings';
 import ExtendedProfileForm from '@/components/ExtendedProfileForm';
 import AuthButton from '@/components/AuthButton';
+import LinkManager from '@/components/LinkManager';
+import Analytics from '@/components/Analytics';
+import SubscriptionManager from '@/components/SubscriptionManager';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -60,7 +62,7 @@ const Dashboard = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">L</span>
               </div>
-              <h1 className="text-xl font-semibold">Dashboard</h1>
+              <h1 className="text-xl font-semibold">LinkHub Dashboard</h1>
             </div>
             <AuthButton />
           </div>
@@ -99,6 +101,13 @@ const Dashboard = () => {
                     <CardDescription>
                       @{profile?.username || 'no-username'}
                     </CardDescription>
+                    {profile?.custom_url && (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          /{profile.custom_url}
+                        </Badge>
+                      </div>
+                    )}
                   </>
                 )}
               </CardHeader>
@@ -154,6 +163,23 @@ const Dashboard = () => {
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
+
+                    {profile?.custom_url && (
+                      <Button 
+                        asChild
+                        className="w-full"
+                        variant="secondary"
+                      >
+                        <a 
+                          href={`/${profile.custom_url}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Public Profile
+                        </a>
+                      </Button>
+                    )}
                   </>
                 )}
               </CardContent>
@@ -163,12 +189,13 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="links">Links</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="subscription">Premium</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -177,7 +204,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <CardTitle>Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}!</CardTitle>
                     <CardDescription>
-                      Here's an overview of your account and activity.
+                      Manage your links and track their performance from your LinkHub dashboard.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -207,7 +234,7 @@ const Dashboard = () => {
                   <CardHeader>
                     <CardTitle>Quick Actions</CardTitle>
                     <CardDescription>
-                      Common tasks and settings you might need.
+                      Common tasks and features you might need.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -219,22 +246,22 @@ const Dashboard = () => {
                       
                       <Button variant="outline" asChild>
                         <span>
-                          <Settings className="h-4 w-4 mr-2" />
-                          Account Settings
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Manage Links
                         </span>
                       </Button>
                       
                       <Button variant="outline" asChild>
                         <span>
                           <Activity className="h-4 w-4 mr-2" />
-                          View Activity
+                          View Analytics
                         </span>
                       </Button>
                       
                       <Button variant="outline" asChild>
                         <span>
-                          <Bell className="h-4 w-4 mr-2" />
-                          Notifications
+                          <Settings className="h-4 w-4 mr-2" />
+                          Upgrade Plan
                         </span>
                       </Button>
                     </div>
@@ -242,20 +269,24 @@ const Dashboard = () => {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="links">
+                <LinkManager />
+              </TabsContent>
+
+              <TabsContent value="analytics">
+                <Analytics />
+              </TabsContent>
+
               <TabsContent value="profile">
                 <ExtendedProfileForm />
               </TabsContent>
 
+              <TabsContent value="subscription">
+                <SubscriptionManager />
+              </TabsContent>
+
               <TabsContent value="settings">
                 <AccountSettings />
-              </TabsContent>
-
-              <TabsContent value="activity">
-                <ActivityHistory />
-              </TabsContent>
-
-              <TabsContent value="notifications">
-                <NotificationSettings />
               </TabsContent>
             </Tabs>
           </div>

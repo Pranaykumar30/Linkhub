@@ -9,11 +9,98 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      link_clicks: {
+        Row: {
+          city: string | null
+          clicked_at: string
+          country: string | null
+          id: string
+          ip_address: unknown | null
+          link_id: string
+          referer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          clicked_at?: string
+          country?: string | null
+          id?: string
+          ip_address?: unknown | null
+          link_id: string
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          clicked_at?: string
+          country?: string | null
+          id?: string
+          ip_address?: unknown | null
+          link_id?: string
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      links: {
+        Row: {
+          click_count: number
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          position: number
+          slug: string | null
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          slug?: string | null
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          slug?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          custom_url: string | null
           full_name: string | null
           id: string
           updated_at: string
@@ -24,6 +111,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_url?: string | null
           full_name?: string | null
           id: string
           updated_at?: string
@@ -34,11 +122,48 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_url?: string | null
           full_name?: string | null
           id?: string
           updated_at?: string
           username?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
