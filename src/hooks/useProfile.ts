@@ -102,38 +102,47 @@ export const useProfile = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const channelName = `profile-changes-${user.id}`;
+    let channel: any = null;
     
-    // Check if channel already exists and remove it
-    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
-    if (existingChannel) {
-      console.log(`Removing existing channel: ${channelName}`);
-      supabase.removeChannel(existingChannel);
-    }
-
-    console.log(`Creating new channel: ${channelName}`);
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Profile changed:', payload);
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            setProfile(payload.new as Profile);
+    const setupRealtimeSubscription = () => {
+      const channelName = `profile-changes-${user.id}`;
+      
+      console.log(`Setting up realtime subscription: ${channelName}`);
+      
+      channel = supabase
+        .channel(channelName, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: user.id },
+          },
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Profile changed:', payload);
+            if (payload.eventType === 'UPDATE' && payload.new) {
+              setProfile(payload.new as Profile);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          console.log(`Profile subscription status: ${status}`);
+        });
+    };
+
+    setupRealtimeSubscription();
 
     return () => {
-      console.log(`Unsubscribing from channel: ${channelName}`);
-      supabase.removeChannel(channel);
+      if (channel) {
+        console.log(`Cleaning up profile subscription`);
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id]);
 

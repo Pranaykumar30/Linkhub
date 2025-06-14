@@ -212,36 +212,45 @@ export const useLinks = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const channelName = `links-changes-${user.id}`;
+    let channel: any = null;
     
-    // Check if channel already exists and remove it
-    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
-    if (existingChannel) {
-      console.log(`Removing existing channel: ${channelName}`);
-      supabase.removeChannel(existingChannel);
-    }
+    const setupRealtimeSubscription = () => {
+      const channelName = `links-changes-${user.id}`;
+      
+      console.log(`Setting up realtime subscription: ${channelName}`);
+      
+      channel = supabase
+        .channel(channelName, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: user.id },
+          },
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'links',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Links changed:', payload);
+            fetchLinks();
+          }
+        )
+        .subscribe((status) => {
+          console.log(`Links subscription status: ${status}`);
+        });
+    };
 
-    console.log(`Creating new channel: ${channelName}`);
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'links',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Links changed:', payload);
-          fetchLinks();
-        }
-      )
-      .subscribe();
+    setupRealtimeSubscription();
 
     return () => {
-      console.log(`Unsubscribing from channel: ${channelName}`);
-      supabase.removeChannel(channel);
+      if (channel) {
+        console.log(`Cleaning up links subscription`);
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id]);
 
