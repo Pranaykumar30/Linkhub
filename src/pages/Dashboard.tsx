@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,24 @@ const Dashboard = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Mock subscription data - will be replaced with real data when Stripe is integrated
+  const mockSubscription = {
+    subscribed: false,
+    subscription_tier: null,
+    subscription_end: null,
+  };
+
+  const getPublicProfileUrl = () => {
+    if (profile?.custom_url) {
+      // For paid plans, use custom domain (when available)
+      if (mockSubscription.subscribed) {
+        return `/${profile.custom_url}`;
+      }
+    }
+    // For free plan, always use LinkHub subdomain
+    return `https://linkhub.app/${profile?.custom_url || user.id}`;
   };
 
   return (
@@ -111,10 +130,10 @@ const Dashboard = () => {
                     <CardDescription>
                       @{profile?.username || 'no-username'}
                     </CardDescription>
-                    {profile?.custom_url && (
+                    {(profile?.custom_url || !mockSubscription.subscribed) && (
                       <div className="mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          /{profile.custom_url}
+                        <Badge variant={mockSubscription.subscribed ? "default" : "secondary"} className="text-xs">
+                          {mockSubscription.subscribed ? `/${profile?.custom_url}` : 'LinkHub URL'}
                         </Badge>
                       </div>
                     )}
@@ -174,14 +193,14 @@ const Dashboard = () => {
                       Edit Profile
                     </Button>
 
-                    {profile?.custom_url && (
+                    {(profile?.custom_url || !mockSubscription.subscribed) && (
                       <Button 
                         asChild
                         className="w-full"
                         variant="secondary"
                       >
                         <a 
-                          href={`/${profile.custom_url}`} 
+                          href={getPublicProfileUrl()} 
                           target="_blank" 
                           rel="noopener noreferrer"
                         >
@@ -199,11 +218,12 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="links">Links</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="subscription">Premium</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
@@ -227,13 +247,10 @@ const Dashboard = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <h4 className="font-medium">Last Sign In</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {user.last_sign_in_at 
-                            ? formatDate(user.last_sign_in_at)
-                            : 'Never'
-                          }
-                        </p>
+                        <h4 className="font-medium">Current Plan</h4>
+                        <Badge variant={mockSubscription.subscribed ? "default" : "outline"}>
+                          {mockSubscription.subscription_tier || 'Free'}
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -295,6 +312,10 @@ const Dashboard = () => {
 
               <TabsContent value="profile">
                 <ExtendedProfileForm />
+              </TabsContent>
+
+              <TabsContent value="notifications">
+                <NotificationSettings />
               </TabsContent>
 
               <TabsContent value="subscription">

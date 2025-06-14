@@ -28,10 +28,16 @@ interface PublicLink {
   click_count: number;
 }
 
+interface SubscriptionData {
+  subscribed: boolean;
+  subscription_tier: string | null;
+}
+
 const PublicProfile = () => {
   const { customUrl } = useParams();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [links, setLinks] = useState<PublicLink[]>([]);
+  const [subscription, setSubscription] = useState<SubscriptionData>({ subscribed: false, subscription_tier: null });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -40,20 +46,49 @@ const PublicProfile = () => {
       if (!customUrl) return;
 
       try {
-        // Get profile by custom URL
-        const { data: profileData, error: profileError } = await supabase
+        // Get profile by custom URL or user ID (for free plan users)
+        let profileData = null;
+        
+        // First try to find by custom_url
+        const { data: customUrlProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('custom_url', customUrl)
           .single();
 
-        if (profileError || !profileData) {
+        if (customUrlProfile) {
+          profileData = customUrlProfile;
+        } else {
+          // If not found by custom_url, try by user ID (for free plan LinkHub URLs)
+          const { data: userIdProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', customUrl)
+            .single();
+          
+          if (userIdProfile) {
+            profileData = userIdProfile;
+          }
+        }
+
+        if (!profileData) {
           setNotFound(true);
           setLoading(false);
           return;
         }
 
         setProfile(profileData);
+
+        // Get subscription status
+        const { data: subscriptionData } = await supabase
+          .from('subscribers')
+          .select('subscribed, subscription_tier')
+          .eq('user_id', profileData.id)
+          .single();
+
+        if (subscriptionData) {
+          setSubscription(subscriptionData);
+        }
 
         // Get active links for this user
         const { data: linksData, error: linksError } = await supabase
@@ -104,6 +139,13 @@ const PublicProfile = () => {
   const getInitials = (name: string | null) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const getPlanBadge = () => {
+    if (!subscription.subscribed) {
+      return <Badge variant="outline" className="text-xs">Free Plan</Badge>;
+    }
+    return <Badge variant="default" className="text-xs">{subscription.subscription_tier} Plan</Badge>;
   };
 
   if (loading) {
@@ -160,6 +202,10 @@ const PublicProfile = () => {
           {profile.username && (
             <p className="text-muted-foreground mb-3">@{profile.username}</p>
           )}
+          
+          <div className="mb-3">
+            {getPlanBadge()}
+          </div>
           
           {profile.bio && (
             <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
@@ -235,9 +281,11 @@ const PublicProfile = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 pt-8 border-t">
-          <p className="text-xs text-muted-foreground">
-            Create your own link page with LinkHub
-          </p>
+          {!subscription.subscribed && (
+            <p className="text-xs text-muted-foreground">
+              Create your own link page with LinkHub
+            </p>
+          )}
         </div>
       </div>
     </div>

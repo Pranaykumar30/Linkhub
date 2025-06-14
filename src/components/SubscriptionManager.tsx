@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Crown, Zap, Star, Loader2 } from 'lucide-react';
+import { Check, Crown, Zap, Star, Loader2, Sparkles } from 'lucide-react';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -106,10 +106,11 @@ const SubscriptionManager = () => {
       price: '$7.99',
       description: 'Perfect for getting started',
       features: [
-        'Up to 10 links',
+        'Up to 25 links',
         'Basic analytics',
         'Custom profile URL',
-        'Email support'
+        'Email support',
+        'LinkHub branding'
       ],
       icon: Zap,
       popular: false,
@@ -119,12 +120,13 @@ const SubscriptionManager = () => {
       price: '$19.99',
       description: 'Most popular choice',
       features: [
-        'Unlimited links',
+        'Up to 100 links',
         'Advanced analytics',
         'Custom domain support',
         'Priority support',
         'Link scheduling',
-        'Custom themes'
+        'Custom themes',
+        'Remove LinkHub branding'
       ],
       icon: Crown,
       popular: true,
@@ -132,14 +134,17 @@ const SubscriptionManager = () => {
     {
       name: 'Enterprise',
       price: '$49.99',
-      description: 'For power users',
+      description: 'For power users and teams',
       features: [
-        'Everything in Premium',
+        'Unlimited links',
+        'Advanced analytics & exports',
+        'Multiple custom domains',
         'Team collaboration',
         'White-label solution',
         'API access',
         'Dedicated support',
-        'Custom integrations'
+        'Custom integrations',
+        'Advanced security features'
       ],
       icon: Star,
       popular: false,
@@ -196,6 +201,42 @@ const SubscriptionManager = () => {
         </Card>
       )}
 
+      {/* Free Plan Info */}
+      {!subscription.subscribed && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-muted-foreground" />
+              Free Plan
+            </CardTitle>
+            <CardDescription>You're currently on our free plan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 mb-4">
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                Up to 5 links
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                Basic profile customization
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                LinkHub public URL (linkhub.app/yourname)
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                Basic analytics
+              </li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              Upgrade to a paid plan to unlock more features and remove limitations.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Subscription Plans */}
       <div className="grid gap-6 md:grid-cols-3">
         {plans.map((plan) => {
@@ -246,35 +287,6 @@ const SubscriptionManager = () => {
           );
         })}
       </div>
-
-      {/* Free Plan Info */}
-      {!subscription.subscribed && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Free Plan</CardTitle>
-            <CardDescription>You're currently on our free plan</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 mb-4">
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-muted-foreground" />
-                Up to 5 links
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-muted-foreground" />
-                Basic profile customization
-              </li>
-              <li className="flex items-center gap-2 text-sm">
-                <Check className="h-4 w-4 text-muted-foreground" />
-                LinkHub branding
-              </li>
-            </ul>
-            <p className="text-sm text-muted-foreground">
-              Upgrade to a paid plan to unlock more features and remove limitations.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
