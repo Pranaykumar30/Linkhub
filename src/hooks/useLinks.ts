@@ -234,17 +234,13 @@ export const useLinks = () => {
     let channel: any = null;
     
     const setupRealtimeSubscription = () => {
-      const channelName = `links-changes-${user.id}`;
+      const timestamp = Date.now();
+      const channelName = `links-changes-${user.id}-${timestamp}`;
       
       console.log(`Setting up realtime subscription: ${channelName}`);
       
       channel = supabase
-        .channel(channelName, {
-          config: {
-            broadcast: { self: false },
-            presence: { key: user.id },
-          },
-        })
+        .channel(channelName)
         .on(
           'postgres_changes',
           {
@@ -255,6 +251,7 @@ export const useLinks = () => {
           },
           (payload) => {
             console.log('Links changed:', payload);
+            // Always refetch to ensure consistency
             fetchLinks();
           }
         )

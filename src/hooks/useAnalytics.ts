@@ -127,7 +127,7 @@ export const useAnalytics = () => {
     fetchAnalytics();
   }, [user]);
 
-  // Set up real-time subscription for links updates
+  // Set up real-time subscriptions for analytics updates
   useEffect(() => {
     if (!user?.id) return;
 
@@ -137,7 +137,6 @@ export const useAnalytics = () => {
     const setupRealtimeSubscriptions = () => {
       console.log('Setting up analytics realtime subscriptions');
       
-      // Create unique channel names with timestamp to avoid conflicts
       const timestamp = Date.now();
       
       // Listen for link changes (click count updates)
@@ -172,7 +171,7 @@ export const useAnalytics = () => {
           },
           (payload) => {
             console.log('Analytics: New click recorded:', payload);
-            // Check if this click belongs to user's links
+            // Check if this click belongs to user's links by fetching fresh data
             fetchAnalytics();
           }
         )
