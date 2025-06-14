@@ -13,6 +13,8 @@ interface Link {
   description?: string;
   icon_url?: string;
   is_active: boolean;
+  is_scheduled?: boolean;
+  scheduled_at?: string;
   click_count: number;
   position: number;
   created_at: string;
@@ -56,7 +58,16 @@ export const useLinks = () => {
     }
   };
 
-  const createLink = async (linkData: { title: string; url: string; description?: string; icon_url?: string; slug?: string; is_active?: boolean }) => {
+  const createLink = async (linkData: { 
+    title: string; 
+    url: string; 
+    description?: string; 
+    icon_url?: string; 
+    slug?: string; 
+    is_active?: boolean;
+    scheduled_at?: string;
+    is_scheduled?: boolean;
+  }) => {
     if (!user) return { error: 'No user found' };
 
     setUpdating(true);
@@ -70,6 +81,8 @@ export const useLinks = () => {
           icon_url: linkData.icon_url || null,
           slug: linkData.slug || null,
           is_active: linkData.is_active ?? true,
+          is_scheduled: linkData.is_scheduled || false,
+          scheduled_at: linkData.scheduled_at || null,
           user_id: user.id,
           position: links.length,
         })
