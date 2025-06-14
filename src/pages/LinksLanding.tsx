@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLinks } from '@/hooks/useLinks';
@@ -45,12 +44,12 @@ const LinksLanding = () => {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link to="/links" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">L</span>
               </div>
               <h1 className="text-xl font-semibold">LinkHub</h1>
-            </div>
+            </Link>
             
             <div className="flex items-center gap-4">
               {profileLoading ? (
