@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 const AuthButton = () => {
   const { user, signOut, loading } = useAuth();
@@ -13,14 +13,22 @@ const AuthButton = () => {
 
   if (user) {
     return (
-      <Button
-        variant="outline"
-        onClick={signOut}
-        className="flex items-center gap-2"
-      >
-        <LogOut className="h-4 w-4" />
-        Sign Out
-      </Button>
+      <div className="flex items-center gap-2">
+        <Link to="/dashboard">
+          <Button variant="outline" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Dashboard
+          </Button>
+        </Link>
+        <Button
+          variant="outline"
+          onClick={signOut}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
     );
   }
 
