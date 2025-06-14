@@ -137,9 +137,12 @@ export const useAnalytics = () => {
     const setupRealtimeSubscriptions = () => {
       console.log('Setting up analytics realtime subscriptions');
       
+      // Create unique channel names with timestamp to avoid conflicts
+      const timestamp = Date.now();
+      
       // Listen for link changes (click count updates)
       linksChannel = supabase
-        .channel(`analytics-links-${user.id}`)
+        .channel(`analytics-links-${user.id}-${timestamp}`)
         .on(
           'postgres_changes',
           {
@@ -159,7 +162,7 @@ export const useAnalytics = () => {
 
       // Listen for new click records
       clicksChannel = supabase
-        .channel(`analytics-clicks-${user.id}`)
+        .channel(`analytics-clicks-${user.id}-${timestamp}`)
         .on(
           'postgres_changes',
           {
