@@ -1,12 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useLinks } from '@/hooks/useLinks';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExternalLink, Globe, User } from 'lucide-react';
+import { ExternalLink, User } from 'lucide-react';
 
 interface PublicProfileData {
   id: string;
@@ -27,16 +26,10 @@ interface PublicLink {
   click_count: number;
 }
 
-interface SubscriptionData {
-  subscribed: boolean;
-  subscription_tier: string | null;
-}
-
 const PublicProfile = () => {
   const { customUrl } = useParams();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [links, setLinks] = useState<PublicLink[]>([]);
-  const [subscription, setSubscription] = useState<SubscriptionData>({ subscribed: false, subscription_tier: null });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -80,32 +73,6 @@ const PublicProfile = () => {
         }
 
         setProfile(profileData);
-
-        // Get subscription status
-        const { data: subscriptionData } = await supabase
-          .from('subscribers')
-          .select('subscribed, subscription_tier')
-          .eq('user_id', profileData.id)
-          .maybeSingle();
-
-        if (subscriptionData) {
-          setSubscription(subscriptionData);
-        }
-
-        // Check if user is admin
-        const { data: adminData } = await supabase
-          .from('admin_users')
-          .select('admin_role')
-          .eq('user_id', profileData.id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (adminData) {
-          setSubscription({
-            subscribed: true,
-            subscription_tier: 'Enterprise',
-          });
-        }
 
         // Get active links for this user
         const { data: linksData, error: linksError } = await supabase
@@ -158,34 +125,17 @@ const PublicProfile = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const getPlanBadge = () => {
-    if (!subscription.subscribed) {
-      return <Badge variant="outline" className="text-xs">Free Plan</Badge>;
-    }
-    return <Badge variant="default" className="text-xs">{subscription.subscription_tier} Plan</Badge>;
-  };
-
-  const getDisplayUrl = () => {
-    // Show custom URL if user has it and is on paid plan
-    if (profile?.custom_url && subscription.subscribed) {
-      return `linkhub.app/${profile.custom_url}`;
-    }
-    // Otherwise show username
-    return `linkhub.app/${profile?.username || customUrl}`;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-4">
-            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
-            <Skeleton className="h-6 w-32 mx-auto" />
-            <Skeleton className="h-4 w-48 mx-auto" />
+            <Skeleton className="h-32 w-32 rounded-full mx-auto" />
+            <Skeleton className="h-8 w-48 mx-auto" />
           </div>
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
             ))}
           </div>
         </div>
@@ -195,12 +145,12 @@ const PublicProfile = () => {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h1 className="text-xl font-semibold mb-2">Profile Not Found</h1>
-            <p className="text-muted-foreground">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-sm shadow-lg">
+          <CardContent className="text-center py-12">
+            <User className="h-16 w-16 text-slate-400 mx-auto mb-6" />
+            <h1 className="text-2xl font-semibold mb-3 text-slate-800">Profile Not Found</h1>
+            <p className="text-slate-600">
               The profile you're looking for doesn't exist or has been removed.
             </p>
           </CardContent>
@@ -210,107 +160,65 @@ const PublicProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <div className="container mx-auto px-4 py-8 max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12">
+      <div className="container mx-auto px-4 max-w-sm">
         {/* Profile Header */}
         <div className="text-center mb-8">
-          <Avatar className="h-24 w-24 mx-auto mb-4">
+          <Avatar className="h-32 w-32 mx-auto mb-6 shadow-lg ring-4 ring-white">
             <AvatarImage src={profile.avatar_url || ''} />
-            <AvatarFallback className="text-xl">
+            <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
               {getInitials(profile.full_name)}
             </AvatarFallback>
           </Avatar>
           
-          <h1 className="text-2xl font-bold mb-2">
-            {profile.full_name || 'No name set'}
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            {profile.full_name || 'Welcome'}
           </h1>
-          
-          <p className="text-muted-foreground mb-3 text-sm">
-            {getDisplayUrl()}
-          </p>
-          
-          <div className="mb-3">
-            {getPlanBadge()}
-          </div>
-          
-          {profile.bio && (
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              {profile.bio}
-            </p>
-          )}
-          
-          {profile.website && (
-            <a 
-              href={profile.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-            >
-              <Globe className="h-4 w-4" />
-              Visit Website
-            </a>
-          )}
         </div>
 
         {/* Links */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {links.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">No links available</p>
+            <Card className="shadow-lg">
+              <CardContent className="text-center py-12">
+                <p className="text-slate-600">No links available</p>
               </CardContent>
             </Card>
           ) : (
             links.map((link) => (
               <Card 
                 key={link.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-105 shadow-lg border-0 bg-white"
                 onClick={() => handleLinkClick(link)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
                     {link.icon_url ? (
                       <img 
                         src={link.icon_url} 
                         alt="" 
-                        className="h-8 w-8 rounded object-cover"
+                        className="h-12 w-12 rounded-lg object-cover shadow-sm"
                       />
                     ) : (
-                      <div className="h-8 w-8 bg-primary/10 rounded flex items-center justify-center">
-                        <ExternalLink className="h-4 w-4 text-primary" />
+                      <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <ExternalLink className="h-6 w-6 text-white" />
                       </div>
                     )}
                     
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{link.title}</h3>
+                      <h3 className="font-semibold text-lg text-slate-800 truncate">{link.title}</h3>
                       {link.description && (
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-sm text-slate-600 truncate mt-1">
                           {link.description}
                         </p>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      {link.click_count > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {link.click_count}
-                        </Badge>
-                      )}
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                    </div>
+                    <ExternalLink className="h-5 w-5 text-slate-400 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
             ))
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8 pt-8 border-t">
-          {!subscription.subscribed && (
-            <p className="text-xs text-muted-foreground">
-              Create your own link page with LinkHub
-            </p>
           )}
         </div>
       </div>
