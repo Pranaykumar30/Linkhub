@@ -100,9 +100,18 @@ export const useProfile = () => {
 
   // Set up real-time subscription for profile changes
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const channelName = `profile-changes-${user.id}`;
+    
+    // Check if channel already exists and remove it
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
+    if (existingChannel) {
+      console.log(`Removing existing channel: ${channelName}`);
+      supabase.removeChannel(existingChannel);
+    }
+
+    console.log(`Creating new channel: ${channelName}`);
     const channel = supabase
       .channel(channelName)
       .on(
@@ -126,7 +135,7 @@ export const useProfile = () => {
       console.log(`Unsubscribing from channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]); // Use user.id instead of user to prevent unnecessary re-subscriptions
+  }, [user?.id]);
 
   return {
     profile,

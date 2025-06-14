@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,6 +200,15 @@ export const useLinks = () => {
     if (!user?.id) return;
 
     const channelName = `links-changes-${user.id}`;
+    
+    // Check if channel already exists and remove it
+    const existingChannel = supabase.getChannels().find(ch => ch.topic === channelName);
+    if (existingChannel) {
+      console.log(`Removing existing channel: ${channelName}`);
+      supabase.removeChannel(existingChannel);
+    }
+
+    console.log(`Creating new channel: ${channelName}`);
     const channel = supabase
       .channel(channelName)
       .on(
@@ -220,7 +230,7 @@ export const useLinks = () => {
       console.log(`Unsubscribing from channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [user?.id]); // Use user.id instead of user to prevent unnecessary re-subscriptions
+  }, [user?.id]);
 
   return {
     links,
