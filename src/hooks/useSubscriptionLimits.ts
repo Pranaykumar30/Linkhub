@@ -14,6 +14,56 @@ interface SubscriptionLimits {
   subscribed: boolean;
 }
 
+// Test subscription data for different plans
+const getTestSubscriptionLimits = (tier: string | null): SubscriptionLimits => {
+  switch (tier) {
+    case 'Basic':
+      return {
+        linkLimit: 25,
+        customDomainEnabled: true,
+        advancedAnalyticsEnabled: false,
+        teamCollaborationEnabled: false,
+        apiAccessEnabled: false,
+        whiteLabelEnabled: false,
+        subscriptionTier: 'Basic',
+        subscribed: true,
+      };
+    case 'Premium':
+      return {
+        linkLimit: 100,
+        customDomainEnabled: true,
+        advancedAnalyticsEnabled: true,
+        teamCollaborationEnabled: true,
+        apiAccessEnabled: false,
+        whiteLabelEnabled: true,
+        subscriptionTier: 'Premium',
+        subscribed: true,
+      };
+    case 'Enterprise':
+      return {
+        linkLimit: -1, // Unlimited
+        customDomainEnabled: true,
+        advancedAnalyticsEnabled: true,
+        teamCollaborationEnabled: true,
+        apiAccessEnabled: true,
+        whiteLabelEnabled: true,
+        subscriptionTier: 'Enterprise',
+        subscribed: true,
+      };
+    default:
+      return {
+        linkLimit: 5,
+        customDomainEnabled: false,
+        advancedAnalyticsEnabled: false,
+        teamCollaborationEnabled: false,
+        apiAccessEnabled: false,
+        whiteLabelEnabled: false,
+        subscriptionTier: null,
+        subscribed: false,
+      };
+  }
+};
+
 export const useSubscriptionLimits = () => {
   const { user } = useAuth();
   const [limits, setLimits] = useState<SubscriptionLimits>({
@@ -86,6 +136,13 @@ export const useSubscriptionLimits = () => {
     }
   };
 
+  // Add a test mode function that can simulate different subscription tiers
+  const setTestMode = (testTier: string | null) => {
+    const testLimits = getTestSubscriptionLimits(testTier);
+    setLimits(testLimits);
+    console.log(`Test mode activated: ${testTier || 'Free'} plan`, testLimits);
+  };
+
   const canCreateLink = (currentLinkCount: number): boolean => {
     if (limits.linkLimit === -1) return true; // Unlimited
     return currentLinkCount < limits.linkLimit;
@@ -106,5 +163,6 @@ export const useSubscriptionLimits = () => {
     canCreateLink,
     getRemainingLinks,
     refetchLimits: fetchLimits,
+    setTestMode, // Expose test mode function
   };
 };

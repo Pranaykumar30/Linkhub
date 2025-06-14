@@ -20,6 +20,7 @@ import LinkManager from '@/components/LinkManager';
 import Analytics from '@/components/Analytics';
 import SubscriptionManager from '@/components/SubscriptionManager';
 import TestUserCreator from '@/components/TestUserCreator';
+import TestModeToggle from '@/components/TestModeToggle';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -365,6 +366,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                   
+                  <TestModeToggle />
                   <TestUserCreator />
                 </div>
               </TabsContent>
