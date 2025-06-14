@@ -167,7 +167,7 @@ const SubscriptionManager = () => {
       features: [
         'Up to 25 links',
         'Basic analytics',
-        'Custom profile URL',
+        'Custom profile URL', 
         'Email support',
         'LinkHub branding'
       ],

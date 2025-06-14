@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink, Home } from 'lucide-react';
+import { User, Calendar, Globe, Edit, Settings, Activity, Bell, UserPlus, ExternalLink, Home, Key, HelpCircle, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +22,10 @@ import SubscriptionManager from '@/components/SubscriptionManager';
 import TestUserCreator from '@/components/TestUserCreator';
 import TestModeToggle from '@/components/TestModeToggle';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
+import CustomDomainManager from '@/components/CustomDomainManager';
+import ApiKeyManager from '@/components/ApiKeyManager';
+import SupportCenter from '@/components/SupportCenter';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -32,6 +36,7 @@ interface SubscriptionData {
 const Dashboard = () => {
   const { user } = useAuth();
   const { profile, loading, refetchProfile } = useProfile();
+  const { limits } = useSubscriptionLimits();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [subscription, setSubscription] = useState<SubscriptionData>({
@@ -253,14 +258,16 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-8">
+              <TabsList className="grid w-full grid-cols-10">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="links">Links</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                <TabsTrigger value="domains">Domains</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="api">API</TabsTrigger>
+                <TabsTrigger value="support">Support</TabsTrigger>
                 <TabsTrigger value="subscription">Premium</TabsTrigger>
-                <TabsTrigger value="testing">Testing</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
@@ -274,7 +281,7 @@ const Dashboard = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-3">
                       <div className="space-y-2">
                         <h4 className="font-medium">Account Status</h4>
                         <Badge variant="secondary">
@@ -286,6 +293,57 @@ const Dashboard = () => {
                         <h4 className="font-medium">Current Plan</h4>
                         <Badge variant={subscription.subscribed ? "default" : "outline"}>
                           {subscription.subscription_tier || 'Free'}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Plan Features</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {limits.customThemesEnabled && <Badge variant="secondary" className="text-xs">Themes</Badge>}
+                          {limits.linkSchedulingEnabled && <Badge variant="secondary" className="text-xs">Scheduling</Badge>}
+                          {limits.customDomainEnabled && <Badge variant="secondary" className="text-xs">Domains</Badge>}
+                          {limits.apiAccessEnabled && <Badge variant="secondary" className="text-xs">API</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Feature Overview by Plan */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Available Features</CardTitle>
+                    <CardDescription>
+                      Based on your {subscription.subscription_tier || 'Free'} plan
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>Link Scheduling</span>
+                        <Badge variant={limits.linkSchedulingEnabled ? "default" : "secondary"}>
+                          {limits.linkSchedulingEnabled ? 'Available' : 'Premium+'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>Custom Domains</span>
+                        <Badge variant={limits.customDomainEnabled ? "default" : "secondary"}>
+                          {limits.customDomainEnabled ? 'Available' : 'Premium+'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>Team Collaboration</span>
+                        <Badge variant={limits.teamCollaborationEnabled ? "default" : "secondary"}>
+                          {limits.teamCollaborationEnabled ? 'Available' : 'Enterprise'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded">
+                        <span>API Access</span>
+                        <Badge variant={limits.apiAccessEnabled ? "default" : "secondary"}>
+                          {limits.apiAccessEnabled ? 'Available' : 'Enterprise'}
                         </Badge>
                       </div>
                     </div>
@@ -353,16 +411,61 @@ const Dashboard = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="notifications">
-                <NotificationSettings />
+              <TabsContent value="domains">
+                <CustomDomainManager />
+              </TabsContent>
+
+              <TabsContent value="team">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Team Collaboration
+                    </CardTitle>
+                    <CardDescription>
+                      Manage team members and collaboration features
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!limits.teamCollaborationEnabled ? (
+                      <div className="text-center py-8">
+                        <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Team Collaboration</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Team collaboration features are available for Enterprise subscribers.
+                        </p>
+                        <Button onClick={() => setActiveTab('subscription')}>
+                          Upgrade to Enterprise
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Team Features Coming Soon</h3>
+                        <p className="text-muted-foreground">
+                          Team collaboration features are currently in development.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="api">
+                <ApiKeyManager />
+              </TabsContent>
+
+              <TabsContent value="support">
+                <SupportCenter />
               </TabsContent>
 
               <TabsContent value="subscription">
                 <SubscriptionManager />
               </TabsContent>
 
-              <TabsContent value="testing">
+              <TabsContent value="settings">
                 <div className="space-y-6">
+                  <AccountSettings />
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Testing Tools</h2>
                     <p className="text-muted-foreground mb-6">
@@ -373,10 +476,6 @@ const Dashboard = () => {
                   <TestModeToggle />
                   <TestUserCreator />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="settings">
-                <AccountSettings />
               </TabsContent>
             </Tabs>
           </div>

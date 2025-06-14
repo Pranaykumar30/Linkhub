@@ -12,6 +12,17 @@ interface SubscriptionLimits {
   whiteLabelEnabled: boolean;
   subscriptionTier: string | null;
   subscribed: boolean;
+  linkSchedulingEnabled: boolean;
+  customProfileUrlEnabled: boolean;
+  emailSupportEnabled: boolean;
+  prioritySupportEnabled: boolean;
+  customThemesEnabled: boolean;
+  removeBrandingEnabled: boolean;
+  analyticsExportEnabled: boolean;
+  multipleDomainsEnabled: boolean;
+  dedicatedSupportEnabled: boolean;
+  customIntegrationsEnabled: boolean;
+  advancedSecurityEnabled: boolean;
 }
 
 // Test subscription data for different plans
@@ -20,24 +31,46 @@ const getTestSubscriptionLimits = (tier: string | null): SubscriptionLimits => {
     case 'Basic':
       return {
         linkLimit: 25,
-        customDomainEnabled: true,
+        customDomainEnabled: false,
         advancedAnalyticsEnabled: false,
         teamCollaborationEnabled: false,
         apiAccessEnabled: false,
         whiteLabelEnabled: false,
         subscriptionTier: 'Basic',
         subscribed: true,
+        linkSchedulingEnabled: false,
+        customProfileUrlEnabled: true,
+        emailSupportEnabled: true,
+        prioritySupportEnabled: false,
+        customThemesEnabled: false,
+        removeBrandingEnabled: false,
+        analyticsExportEnabled: false,
+        multipleDomainsEnabled: false,
+        dedicatedSupportEnabled: false,
+        customIntegrationsEnabled: false,
+        advancedSecurityEnabled: false,
       };
     case 'Premium':
       return {
         linkLimit: 100,
         customDomainEnabled: true,
         advancedAnalyticsEnabled: true,
-        teamCollaborationEnabled: true,
+        teamCollaborationEnabled: false,
         apiAccessEnabled: false,
         whiteLabelEnabled: true,
         subscriptionTier: 'Premium',
         subscribed: true,
+        linkSchedulingEnabled: true,
+        customProfileUrlEnabled: true,
+        emailSupportEnabled: true,
+        prioritySupportEnabled: true,
+        customThemesEnabled: true,
+        removeBrandingEnabled: true,
+        analyticsExportEnabled: false,
+        multipleDomainsEnabled: false,
+        dedicatedSupportEnabled: false,
+        customIntegrationsEnabled: false,
+        advancedSecurityEnabled: false,
       };
     case 'Enterprise':
       return {
@@ -49,6 +82,17 @@ const getTestSubscriptionLimits = (tier: string | null): SubscriptionLimits => {
         whiteLabelEnabled: true,
         subscriptionTier: 'Enterprise',
         subscribed: true,
+        linkSchedulingEnabled: true,
+        customProfileUrlEnabled: true,
+        emailSupportEnabled: true,
+        prioritySupportEnabled: true,
+        customThemesEnabled: true,
+        removeBrandingEnabled: true,
+        analyticsExportEnabled: true,
+        multipleDomainsEnabled: true,
+        dedicatedSupportEnabled: true,
+        customIntegrationsEnabled: true,
+        advancedSecurityEnabled: true,
       };
     default:
       return {
@@ -60,6 +104,17 @@ const getTestSubscriptionLimits = (tier: string | null): SubscriptionLimits => {
         whiteLabelEnabled: false,
         subscriptionTier: null,
         subscribed: false,
+        linkSchedulingEnabled: false,
+        customProfileUrlEnabled: false,
+        emailSupportEnabled: false,
+        prioritySupportEnabled: false,
+        customThemesEnabled: false,
+        removeBrandingEnabled: false,
+        analyticsExportEnabled: false,
+        multipleDomainsEnabled: false,
+        dedicatedSupportEnabled: false,
+        customIntegrationsEnabled: false,
+        advancedSecurityEnabled: false,
       };
   }
 };
@@ -75,6 +130,17 @@ export const useSubscriptionLimits = () => {
     whiteLabelEnabled: false,
     subscriptionTier: null,
     subscribed: false,
+    linkSchedulingEnabled: false,
+    customProfileUrlEnabled: false,
+    emailSupportEnabled: false,
+    prioritySupportEnabled: false,
+    customThemesEnabled: false,
+    removeBrandingEnabled: false,
+    analyticsExportEnabled: false,
+    multipleDomainsEnabled: false,
+    dedicatedSupportEnabled: false,
+    customIntegrationsEnabled: false,
+    advancedSecurityEnabled: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -106,28 +172,20 @@ export const useSubscriptionLimits = () => {
       }
 
       if (data) {
+        const tierLimits = getTestSubscriptionLimits(data.subscription_tier);
         setLimits({
-          linkLimit: data.link_limit || 5,
-          customDomainEnabled: data.custom_domain_enabled || false,
-          advancedAnalyticsEnabled: data.advanced_analytics_enabled || false,
-          teamCollaborationEnabled: data.team_collaboration_enabled || false,
-          apiAccessEnabled: data.api_access_enabled || false,
-          whiteLabelEnabled: data.white_label_enabled || false,
-          subscriptionTier: data.subscription_tier,
+          ...tierLimits,
+          linkLimit: data.link_limit || tierLimits.linkLimit,
+          customDomainEnabled: data.custom_domain_enabled || tierLimits.customDomainEnabled,
+          advancedAnalyticsEnabled: data.advanced_analytics_enabled || tierLimits.advancedAnalyticsEnabled,
+          teamCollaborationEnabled: data.team_collaboration_enabled || tierLimits.teamCollaborationEnabled,
+          apiAccessEnabled: data.api_access_enabled || tierLimits.apiAccessEnabled,
+          whiteLabelEnabled: data.white_label_enabled || tierLimits.whiteLabelEnabled,
           subscribed: data.subscribed || false,
         });
       } else {
         // No subscription record, use free plan defaults
-        setLimits({
-          linkLimit: 5,
-          customDomainEnabled: false,
-          advancedAnalyticsEnabled: false,
-          teamCollaborationEnabled: false,
-          apiAccessEnabled: false,
-          whiteLabelEnabled: false,
-          subscriptionTier: null,
-          subscribed: false,
-        });
+        setLimits(getTestSubscriptionLimits(null));
       }
     } catch (error) {
       console.error('Error fetching subscription limits:', error);

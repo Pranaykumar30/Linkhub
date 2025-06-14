@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLinks } from '@/hooks/useLinks';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
@@ -11,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, ExternalLink, Edit, Trash2, BarChart3, Crown, Lock } from 'lucide-react';
+import { Plus, ExternalLink, Edit, Trash2, BarChart3, Crown, Lock, Calendar, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +40,8 @@ const LinkManager = () => {
     description: '',
     icon_url: '',
     is_active: true,
+    scheduled_at: '',
+    is_scheduled: false,
   });
 
   const resetForm = () => {
@@ -51,6 +52,8 @@ const LinkManager = () => {
       description: '',
       icon_url: '',
       is_active: true,
+      scheduled_at: '',
+      is_scheduled: false,
     });
     setEditingLink(null);
   };
@@ -59,10 +62,16 @@ const LinkManager = () => {
     e.preventDefault();
     
     if (!canCreateLink(links.length)) {
-      return; // This shouldn't happen due to UI disabled state, but safety check
+      return;
     }
     
-    const { error } = await createLink(formData);
+    const linkData = {
+      ...formData,
+      scheduled_at: formData.is_scheduled && formData.scheduled_at ? formData.scheduled_at : undefined,
+      is_active: formData.is_scheduled ? false : formData.is_active, // If scheduled, start inactive
+    };
+    
+    const { error } = await createLink(linkData);
     if (!error) {
       setIsCreating(false);
       resetForm();
@@ -73,7 +82,12 @@ const LinkManager = () => {
     e.preventDefault();
     if (!editingLink) return;
     
-    const { error } = await updateLink(editingLink.id, formData);
+    const updates = {
+      ...formData,
+      scheduled_at: formData.is_scheduled && formData.scheduled_at ? formData.scheduled_at : null,
+    };
+    
+    const { error } = await updateLink(editingLink.id, updates);
     if (!error) {
       setEditingLink(null);
       resetForm();
@@ -89,6 +103,8 @@ const LinkManager = () => {
       description: link.description || '',
       icon_url: link.icon_url || '',
       is_active: link.is_active,
+      scheduled_at: link.scheduled_at ? new Date(link.scheduled_at).toISOString().slice(0, 16) : '',
+      is_scheduled: Boolean(link.is_scheduled),
     });
   };
 
@@ -158,14 +174,53 @@ const LinkManager = () => {
         />
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="is_active"
-          checked={formData.is_active}
-          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-        />
-        <Label htmlFor="is_active">Active</Label>
-      </div>
+      {limits.linkSchedulingEnabled && (
+        <div className="space-y-4 p-4 border rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_scheduled"
+              checked={formData.is_scheduled}
+              onCheckedChange={(checked) => setFormData(prev => ({ 
+                ...prev, 
+                is_scheduled: checked,
+                is_active: checked ? false : prev.is_active 
+              }))}
+            />
+            <Label htmlFor="is_scheduled" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Schedule this link
+            </Label>
+          </div>
+          
+          {formData.is_scheduled && (
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_at">Publish Date & Time</Label>
+              <Input
+                id="scheduled_at"
+                type="datetime-local"
+                value={formData.scheduled_at}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                min={new Date().toISOString().slice(0, 16)}
+                required={formData.is_scheduled}
+              />
+              <p className="text-xs text-muted-foreground">
+                The link will be automatically published at the specified time.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!formData.is_scheduled && (
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_active"
+            checked={formData.is_active}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+          />
+          <Label htmlFor="is_active">Active</Label>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-4">
         <Button type="submit" disabled={updating} className="flex-1">
@@ -232,7 +287,7 @@ const LinkManager = () => {
                 {!canAddNewLink && <Lock className="h-4 w-4 ml-2" />}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Link</DialogTitle>
                 <DialogDescription>Add a new link to your profile</DialogDescription>
@@ -301,9 +356,17 @@ const LinkManager = () => {
                     </a>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={link.is_active ? "default" : "secondary"}>
-                      {link.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
+                    <div className="flex gap-1 flex-wrap">
+                      <Badge variant={link.is_active ? "default" : "secondary"}>
+                        {link.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      {link.is_scheduled && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Scheduled
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -338,7 +401,7 @@ const LinkManager = () => {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingLink} onOpenChange={(open) => !open && setEditingLink(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Link</DialogTitle>
             <DialogDescription>Update your link information</DialogDescription>

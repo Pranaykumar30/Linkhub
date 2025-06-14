@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          api_key: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_name: string
+          last_used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          last_used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_primary: boolean | null
+          is_verified: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_primary?: boolean | null
+          is_verified?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       link_clicks: {
         Row: {
           city: string | null
@@ -58,7 +121,9 @@ export type Database = {
           icon_url: string | null
           id: string
           is_active: boolean
+          is_scheduled: boolean | null
           position: number
+          scheduled_at: string | null
           slug: string | null
           title: string
           updated_at: string
@@ -72,7 +137,9 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_active?: boolean
+          is_scheduled?: boolean | null
           position?: number
+          scheduled_at?: string | null
           slug?: string | null
           title: string
           updated_at?: string
@@ -86,7 +153,9 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_active?: boolean
+          is_scheduled?: boolean | null
           position?: number
+          scheduled_at?: string | null
           slug?: string | null
           title?: string
           updated_at?: string
@@ -100,9 +169,12 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          custom_branding_text: string | null
+          custom_branding_url: string | null
           custom_url: string | null
           full_name: string | null
           id: string
+          show_branding: boolean | null
           updated_at: string
           username: string | null
           website: string | null
@@ -111,9 +183,12 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_branding_text?: string | null
+          custom_branding_url?: string | null
           custom_url?: string | null
           full_name?: string | null
           id: string
+          show_branding?: boolean | null
           updated_at?: string
           username?: string | null
           website?: string | null
@@ -122,14 +197,55 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_branding_text?: string | null
+          custom_branding_url?: string | null
           custom_url?: string | null
           full_name?: string | null
           id?: string
+          show_branding?: boolean | null
           updated_at?: string
           username?: string | null
           website?: string | null
         }
         Relationships: []
+      }
+      scheduled_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean | null
+          link_id: string | null
+          scheduled_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          link_id?: string | null
+          scheduled_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          link_id?: string | null
+          scheduled_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_links_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -185,12 +301,110 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          priority: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          joined_at: string | null
+          role: string
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          joined_at?: string | null
+          role?: string
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          joined_at?: string | null
+          role?: string
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      auto_publish_scheduled_links: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
