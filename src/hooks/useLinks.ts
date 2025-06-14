@@ -226,7 +226,7 @@ export const useLinks = () => {
     fetchLinks();
   }, [user]);
 
-  // Set up real-time subscription for links
+  // Set up real-time subscription for links - listen to ALL updates for user's links
   useEffect(() => {
     if (!user?.id) return;
 
@@ -238,19 +238,22 @@ export const useLinks = () => {
       
       console.log(`Setting up realtime subscription: ${channelName}`);
       
+      // Get user's link IDs to filter updates
+      const userLinkIds = links.map(link => link.id);
+      
       channel = supabase
         .channel(channelName)
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'UPDATE',
             schema: 'public',
             table: 'links',
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
             console.log('Links changed:', payload);
-            // Always refetch to ensure consistency
+            // Refetch to ensure consistency
             fetchLinks();
           }
         )
@@ -259,7 +262,10 @@ export const useLinks = () => {
         });
     };
 
-    setupRealtimeSubscription();
+    // Only setup subscription if we have links loaded
+    if (links.length > 0) {
+      setupRealtimeSubscription();
+    }
 
     return () => {
       if (channel) {
@@ -267,7 +273,7 @@ export const useLinks = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id]);
+  }, [user?.id, links.length]); // Include links.length to re-setup when links change
 
   return {
     links,

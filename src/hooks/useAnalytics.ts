@@ -132,6 +132,7 @@ export const useAnalytics = () => {
     if (!user?.id) return;
 
     let linksChannel: any = null;
+    let clicksChannel: any = null;
     
     const setupRealtimeSubscriptions = () => {
       console.log('Setting up analytics realtime subscriptions');
@@ -144,7 +145,7 @@ export const useAnalytics = () => {
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'UPDATE',
             schema: 'public',
             table: 'links',
             filter: `user_id=eq.${user.id}`
@@ -157,6 +158,35 @@ export const useAnalytics = () => {
         .subscribe((status) => {
           console.log(`Analytics links subscription status: ${status}`);
         });
+
+      // Listen for new click records to catch public profile clicks
+      clicksChannel = supabase
+        .channel(`analytics-clicks-${user.id}-${timestamp}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'link_clicks'
+          },
+          async (payload) => {
+            console.log('Analytics: New click recorded:', payload);
+            // Check if this click belongs to user's links
+            const { data: linkData } = await supabase
+              .from('links')
+              .select('user_id')
+              .eq('id', payload.new.link_id)
+              .single();
+            
+            if (linkData?.user_id === user.id) {
+              console.log('Click belongs to current user, refreshing analytics');
+              fetchAnalytics();
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log(`Analytics clicks subscription status: ${status}`);
+        });
     };
 
     setupRealtimeSubscriptions();
@@ -165,6 +195,10 @@ export const useAnalytics = () => {
       if (linksChannel) {
         console.log('Cleaning up analytics links subscription');
         supabase.removeChannel(linksChannel);
+      }
+      if (clicksChannel) {
+        console.log('Cleaning up analytics clicks subscription');
+        supabase.removeChannel(clicksChannel);
       }
     };
   }, [user?.id]);
