@@ -78,6 +78,12 @@ export const useProfile = () => {
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
       });
+      
+      // Auto-refresh profile data after successful update
+      setTimeout(() => {
+        fetchProfile();
+      }, 100);
+      
       return { data };
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -89,6 +95,34 @@ export const useProfile = () => {
 
   useEffect(() => {
     fetchProfile();
+  }, [user]);
+
+  // Set up real-time subscription for profile changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Profile changed:', payload);
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setProfile(payload.new as Profile);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   return {

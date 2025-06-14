@@ -33,7 +33,7 @@ interface ProfileEditFormProps {
 }
 
 const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
-  const { updateProfile, updating } = useProfile();
+  const { updateProfile, updating, refetchProfile } = useProfile();
   const { uploadAvatar, removeAvatar, uploading } = useAvatarUpload();
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
@@ -100,6 +100,10 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
 
     const { error } = await updateProfile(updates);
     if (!error) {
+      // Trigger a manual refresh to ensure UI is updated
+      setTimeout(() => {
+        refetchProfile();
+      }, 200);
       onClose();
     }
   };
