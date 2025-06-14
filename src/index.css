@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -89,6 +83,51 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* Premium Theme: Ocean Blue */
+  .theme-blue {
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 27% 84%;
+    --secondary-foreground: 217 91% 20%;
+    --accent: 213 27% 84%;
+    --accent-foreground: 217 91% 20%;
+    --muted: 213 27% 84%;
+    --muted-foreground: 217 13% 35%;
+    --border: 213 27% 82%;
+    --input: 213 27% 82%;
+    --ring: 217 91% 60%;
+  }
+
+  /* Premium Theme: Forest Green */
+  .theme-green {
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 138 76% 97%;
+    --secondary-foreground: 142 71% 25%;
+    --accent: 138 76% 97%;
+    --accent-foreground: 142 71% 25%;
+    --muted: 138 76% 97%;
+    --muted-foreground: 142 13% 35%;
+    --border: 138 76% 94%;
+    --input: 138 76% 94%;
+    --ring: 142 71% 45%;
+  }
+
+  /* Premium Theme: Royal Purple */
+  .theme-purple {
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 20% 98%;
+    --secondary-foreground: 263 70% 30%;
+    --accent: 270 20% 98%;
+    --accent-foreground: 263 70% 30%;
+    --muted: 270 20% 98%;
+    --muted-foreground: 263 13% 35%;
+    --border: 270 20% 95%;
+    --input: 270 20% 95%;
+    --ring: 263 70% 50%;
   }
 }
 

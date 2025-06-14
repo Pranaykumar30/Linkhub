@@ -21,6 +21,7 @@ import Analytics from '@/components/Analytics';
 import SubscriptionManager from '@/components/SubscriptionManager';
 import TestUserCreator from '@/components/TestUserCreator';
 import TestModeToggle from '@/components/TestModeToggle';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -346,7 +347,10 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="profile">
-                <ExtendedProfileForm />
+                <div className="space-y-6">
+                  <ExtendedProfileForm />
+                  <ThemeSwitcher />
+                </div>
               </TabsContent>
 
               <TabsContent value="notifications">
