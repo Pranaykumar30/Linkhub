@@ -69,15 +69,7 @@ const LinksLanding = () => {
                 </div>
               )}
               
-              <div className="flex items-center gap-2">
-                <Link to="/dashboard">
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <AuthButton />
-              </div>
+              <AuthButton />
             </div>
           </div>
         </div>
