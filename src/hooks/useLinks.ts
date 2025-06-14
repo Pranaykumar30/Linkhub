@@ -197,10 +197,11 @@ export const useLinks = () => {
 
   // Set up real-time subscription for links
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
+    const channelName = `links-changes-${user.id}`;
     const channel = supabase
-      .channel('links-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -217,9 +218,10 @@ export const useLinks = () => {
       .subscribe();
 
     return () => {
+      console.log(`Unsubscribing from channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]); // Use user.id instead of user to prevent unnecessary re-subscriptions
 
   return {
     links,

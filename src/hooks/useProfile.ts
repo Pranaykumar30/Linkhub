@@ -102,8 +102,9 @@ export const useProfile = () => {
   useEffect(() => {
     if (!user) return;
 
+    const channelName = `profile-changes-${user.id}`;
     const channel = supabase
-      .channel('profile-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -122,9 +123,10 @@ export const useProfile = () => {
       .subscribe();
 
     return () => {
+      console.log(`Unsubscribing from channel: ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]); // Use user.id instead of user to prevent unnecessary re-subscriptions
 
   return {
     profile,
