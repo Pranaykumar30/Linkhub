@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import SubscriptionManager from '@/components/SubscriptionManager';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { profile, loading } = useProfile();
+  const { profile, loading, refetchProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -305,6 +306,7 @@ const Dashboard = () => {
         <ProfileEditForm 
           profile={profile}
           onClose={() => setIsEditing(false)}
+          onUpdate={refetchProfile}
         />
       )}
     </div>

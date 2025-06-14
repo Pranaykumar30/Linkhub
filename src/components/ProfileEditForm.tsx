@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
-import { useProfile } from '@/hooks/useProfile';
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -31,11 +32,13 @@ interface Profile {
 interface ProfileEditFormProps {
   profile: Profile | null;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
-  const { updateProfile, updating, refetchProfile } = useProfile();
+const ProfileEditForm = ({ profile, onClose, onUpdate }: ProfileEditFormProps) => {
+  const { toast } = useToast();
   const { uploadAvatar, removeAvatar, uploading } = useAvatarUpload();
+  const [updating, setUpdating] = useState(false);
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     username: profile?.username || '',
@@ -82,6 +85,41 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
     }
   };
 
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!profile) return { error: 'No profile found' };
+
+    setUpdating(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', profile.id)
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error updating profile",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+      
+      return { data };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { error };
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -101,10 +139,12 @@ const ProfileEditForm = ({ profile, onClose }: ProfileEditFormProps) => {
 
     const { error } = await updateProfile(updates);
     if (!error) {
-      // Trigger a manual refresh to ensure UI is updated
-      setTimeout(() => {
-        refetchProfile();
-      }, 200);
+      // Trigger callback to parent to refresh data
+      if (onUpdate) {
+        setTimeout(() => {
+          onUpdate();
+        }, 200);
+      }
       onClose();
     }
   };
