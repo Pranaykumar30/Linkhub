@@ -21,7 +21,11 @@ export const themes: ThemeConfig[] = [
 
 export const useTheme = () => {
   const { limits } = useSubscriptionLimits();
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Initialize from localStorage immediately
+    const savedTheme = localStorage.getItem('linkhub-theme') as Theme;
+    return savedTheme && themes.find(t => t.value === savedTheme) ? savedTheme : 'light';
+  });
 
   // Check if user can access premium themes
   const canAccessPremiumThemes = limits.subscribed && (
@@ -29,22 +33,7 @@ export const useTheme = () => {
     limits.subscriptionTier === 'Enterprise'
   );
 
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('linkhub-theme') as Theme;
-    if (savedTheme && themes.find(t => t.value === savedTheme)) {
-      // If it's a premium theme and user doesn't have access, fallback to light
-      const themeConfig = themes.find(t => t.value === savedTheme);
-      if (themeConfig?.premium && !canAccessPremiumThemes) {
-        setTheme('light');
-        localStorage.setItem('linkhub-theme', 'light');
-      } else {
-        setTheme(savedTheme);
-      }
-    }
-  }, [canAccessPremiumThemes]);
-
-  // Apply theme to document
+  // Apply theme to document immediately on mount and theme changes
   useEffect(() => {
     const root = document.documentElement;
     
@@ -58,6 +47,15 @@ export const useTheme = () => {
       root.classList.add('dark', `theme-${theme}`);
     }
   }, [theme]);
+
+  // Check theme access when subscription limits change
+  useEffect(() => {
+    const themeConfig = themes.find(t => t.value === theme);
+    if (themeConfig?.premium && !canAccessPremiumThemes) {
+      setTheme('light');
+      localStorage.setItem('linkhub-theme', 'light');
+    }
+  }, [canAccessPremiumThemes, theme]);
 
   const changeTheme = (newTheme: Theme) => {
     const themeConfig = themes.find(t => t.value === newTheme);

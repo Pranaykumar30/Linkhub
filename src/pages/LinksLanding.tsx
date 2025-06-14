@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLinks } from '@/hooks/useLinks';
@@ -6,9 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExternalLink, Settings, Plus, BarChart3, Home, Shield } from 'lucide-react';
+import { ExternalLink, Settings, Plus, BarChart3, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AuthButton from '@/components/AuthButton';
+import LinkHubLogo from '@/components/LinkHubLogo';
 
 const LinksLanding = () => {
   const { user } = useAuth();
@@ -44,12 +46,7 @@ const LinksLanding = () => {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/links" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">L</span>
-              </div>
-              <h1 className="text-xl font-semibold">LinkHub</h1>
-            </Link>
+            <LinkHubLogo />
             
             <div className="flex items-center gap-4">
               {profileLoading ? (
