@@ -97,9 +97,50 @@ const PublicProfile = () => {
     fetchPublicProfile();
   }, [customUrl]);
 
+  // Set up real-time subscription for link updates
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel(`public-links-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'links',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          console.log('Link updated:', payload);
+          // Update the specific link in our state
+          if (payload.new) {
+            setLinks(prev => prev.map(link => 
+              link.id === payload.new.id 
+                ? { ...link, click_count: payload.new.click_count }
+                : link
+            ));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
+
   const handleLinkClick = async (link: PublicLink) => {
-    // Record the click
+    // Optimistically update the click count
+    setLinks(prev => prev.map(l => 
+      l.id === link.id 
+        ? { ...l, click_count: l.click_count + 1 }
+        : l
+    ));
+
+    // Record the click in the background
     try {
+      // Record click analytics
       await supabase
         .from('link_clicks')
         .insert({
@@ -108,13 +149,19 @@ const PublicProfile = () => {
           referer: document.referrer,
         });
 
-      // Increment click count
+      // Update click count
       await supabase
         .from('links')
         .update({ click_count: link.click_count + 1 })
         .eq('id', link.id);
     } catch (error) {
       console.error('Error recording click:', error);
+      // Revert optimistic update on error
+      setLinks(prev => prev.map(l => 
+        l.id === link.id 
+          ? { ...l, click_count: l.click_count - 1 }
+          : l
+      ));
     }
 
     // Navigate to the link

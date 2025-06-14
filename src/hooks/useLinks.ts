@@ -184,23 +184,42 @@ export const useLinks = () => {
 
   const recordClick = async (linkId: string) => {
     try {
-      // Increment click count
-      await supabase
+      const currentLink = links.find(l => l.id === linkId);
+      const newClickCount = (currentLink?.click_count || 0) + 1;
+
+      // Optimistically update the local state
+      setLinks(prev => prev.map(link => 
+        link.id === linkId 
+          ? { ...link, click_count: newClickCount }
+          : link
+      ));
+
+      // Update the database
+      const { error: updateError } = await supabase
         .from('links')
-        .update({ click_count: links.find(l => l.id === linkId)?.click_count + 1 || 1 })
+        .update({ click_count: newClickCount })
         .eq('id', linkId);
+
+      if (updateError) {
+        console.error('Error updating click count:', updateError);
+        // Revert optimistic update on error
+        fetchLinks();
+        return;
+      }
 
       // Record click analytics
       await supabase
         .from('link_clicks')
         .insert({
           link_id: linkId,
-          ip_address: null, // In a real app, you'd get this from request
+          ip_address: null,
           user_agent: navigator.userAgent,
           referer: document.referrer,
         });
     } catch (error) {
       console.error('Error recording click:', error);
+      // Revert optimistic update on error
+      fetchLinks();
     }
   };
 
