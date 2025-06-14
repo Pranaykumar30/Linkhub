@@ -3,13 +3,22 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, TrendingUp, Users, Globe, Crown } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Globe, Crown, RefreshCw } from 'lucide-react';
 import AdvancedAnalytics from './AdvancedAnalytics';
+import { useState } from 'react';
 
 const Analytics = () => {
   const { limits, loading: limitsLoading } = useSubscriptionLimits();
-  const { analytics, loading } = useAnalytics();
+  const { analytics, loading, refetchAnalytics } = useAnalytics();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetchAnalytics();
+    setRefreshing(false);
+  };
 
   // Show advanced analytics for Premium/Enterprise users
   if (!limitsLoading && limits.advancedAnalyticsEnabled) {
@@ -49,10 +58,21 @@ const Analytics = () => {
             Overview of your link performance
           </p>
         </div>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Crown className="h-3 w-3" />
-          Free Plan
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Crown className="h-3 w-3" />
+            Free Plan
+          </Badge>
+        </div>
       </div>
 
       {/* Basic Stats */}

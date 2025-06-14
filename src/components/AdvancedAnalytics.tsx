@@ -5,11 +5,19 @@ import { Button } from '@/components/ui/button';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Globe, Download, Crown } from 'lucide-react';
+import { TrendingUp, Globe, Download, Crown, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 const AdvancedAnalytics = () => {
   const { limits } = useSubscriptionLimits();
-  const { analytics, loading } = useAnalytics();
+  const { analytics, loading, refetchAnalytics } = useAnalytics();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetchAnalytics();
+    setRefreshing(false);
+  };
 
   if (!limits.advancedAnalyticsEnabled) {
     return (
@@ -74,12 +82,23 @@ const AdvancedAnalytics = () => {
             Detailed insights and performance metrics for your links
           </p>
         </div>
-        {limits.subscriptionTier === 'Enterprise' && (
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export Data
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
-        )}
+          {limits.subscriptionTier === 'Enterprise' && (
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Data
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Enhanced Stats Grid */}
