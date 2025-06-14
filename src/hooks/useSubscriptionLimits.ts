@@ -151,6 +151,22 @@ export const useSubscriptionLimits = () => {
     }
 
     try {
+      // Check if user is admin first
+      const { data: adminData } = await supabase
+        .from('admin_users')
+        .select('admin_role')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      // If user is admin, automatically grant Enterprise privileges
+      if (adminData) {
+        const enterpriseLimits = getTestSubscriptionLimits('Enterprise');
+        setLimits(enterpriseLimits);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('subscribers')
         .select(`

@@ -244,6 +244,11 @@ const SubscriptionManager = () => {
                     Next billing: {new Date(subscription.subscription_end).toLocaleDateString()}
                   </p>
                 )}
+                <div className="mt-2">
+                  <p className="text-lg font-semibold">
+                    {plans.find(p => p.name === subscription.subscription_tier)?.price || 'Custom'}/month
+                  </p>
+                </div>
               </div>
               <Button 
                 onClick={manageSubscription}
@@ -289,6 +294,9 @@ const SubscriptionManager = () => {
                 Basic analytics
               </li>
             </ul>
+            <div className="mb-4">
+              <p className="text-lg font-semibold">$0/month</p>
+            </div>
             <p className="text-sm text-muted-foreground">
               Upgrade to a paid plan to unlock more features and remove limitations.
             </p>
