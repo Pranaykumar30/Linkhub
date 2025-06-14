@@ -9,6 +9,78 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          new_data: Json | null
+          old_data: Json | null
+          target_id: string | null
+          target_table: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_data?: Json | null
+          old_data?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          admin_role: Database["public"]["Enums"]["admin_role"]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          permissions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_role?: Database["public"]["Enums"]["admin_role"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_role?: Database["public"]["Enums"]["admin_role"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           api_key: string
@@ -405,9 +477,28 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_admin_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["admin_role"]
+      }
+      is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      log_admin_activity: {
+        Args: {
+          _admin_user_id: string
+          _action: string
+          _target_table?: string
+          _target_id?: string
+          _old_data?: Json
+          _new_data?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      admin_role: "super_admin" | "admin" | "moderator" | "support_agent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -522,6 +613,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      admin_role: ["super_admin", "admin", "moderator", "support_agent"],
+    },
   },
 } as const

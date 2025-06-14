@@ -14,6 +14,7 @@ import LinksLanding from "./pages/LinksLanding";
 import NotFound from "./pages/NotFound";
 import PublicProfile from "./pages/PublicProfile";
 import Demo from "./pages/Demo";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/demo" element={<Demo />} />
             <Route path="/links" element={<LinksLanding />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/:customUrl" element={<PublicProfile />} />
