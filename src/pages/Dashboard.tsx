@@ -19,6 +19,7 @@ import AuthButton from '@/components/AuthButton';
 import LinkManager from '@/components/LinkManager';
 import Analytics from '@/components/Analytics';
 import SubscriptionManager from '@/components/SubscriptionManager';
+import TestUserCreator from '@/components/TestUserCreator';
 
 interface SubscriptionData {
   subscribed: boolean;
@@ -250,13 +251,14 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="links">Links</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="subscription">Premium</TabsTrigger>
+                <TabsTrigger value="testing">Testing</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
@@ -352,6 +354,19 @@ const Dashboard = () => {
 
               <TabsContent value="subscription">
                 <SubscriptionManager />
+              </TabsContent>
+
+              <TabsContent value="testing">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Testing Tools</h2>
+                    <p className="text-muted-foreground mb-6">
+                      Development and testing utilities for the application.
+                    </p>
+                  </div>
+                  
+                  <TestUserCreator />
+                </div>
               </TabsContent>
 
               <TabsContent value="settings">
