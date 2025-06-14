@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -252,7 +253,7 @@ const Dashboard = () => {
                       Edit Profile
                     </Button>
 
-                    {(profile?.custom_url || !subscription.subscribed) && (
+                    {(profile?.custom_url || profile?.username) && (
                       <Button 
                         asChild
                         className="w-full"
