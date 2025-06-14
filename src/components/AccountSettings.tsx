@@ -5,158 +5,301 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Shield, Mail, Bell, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AlertTriangle, Mail, Lock, Trash2, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const AccountSettings = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [emailUpdating, setEmailUpdating] = useState(false);
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleDeleteAccount = () => {
-    toast({
-      title: "Account deletion requested",
-      description: "This feature is not yet implemented.",
-      variant: "destructive",
-    });
+  const updateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim()) return;
+
+    setEmailUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        email: newEmail.trim() 
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email update initiated",
+        description: "Please check both your old and new email addresses for confirmation links.",
+      });
+      setNewEmail('');
+    } catch (error: any) {
+      toast({
+        title: "Failed to update email",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setEmailUpdating(false);
+    }
+  };
+
+  const updatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword !== confirmPassword) {
+      toast({
+        title: "Password mismatch",
+        description: "New passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPasswordUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated.",
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast({
+        title: "Failed to update password",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPasswordUpdating(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    setDeleting(true);
+    try {
+      // First delete user data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user?.id);
+
+      if (profileError) console.error('Error deleting profile:', profileError);
+
+      const { error: linksError } = await supabase
+        .from('links')
+        .delete()
+        .eq('user_id', user?.id);
+
+      if (linksError) console.error('Error deleting links:', linksError);
+
+      // Then sign out (Supabase doesn't allow deleting auth users from client)
+      await signOut();
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account and all associated data have been deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete account",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Account Settings
-        </CardTitle>
-        <CardDescription>
-          Manage your account preferences and security settings
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Email Settings */}
-        <div className="space-y-4">
-          <h4 className="font-medium">Email & Communication</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Email Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Receive updates and notifications via email
-                </p>
-              </div>
-              <Switch 
-                checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Push Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Receive browser push notifications
-                </p>
-              </div>
-              <Switch 
-                checked={pushNotifications}
-                onCheckedChange={setPushNotifications}
-              />
-            </div>
+    <div className="space-y-6">
+      {/* Account Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Account Information
+          </CardTitle>
+          <CardDescription>
+            View and manage your account details
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-2">
+            <Label>Email Address</Label>
+            <Input value={user?.email || ''} disabled />
           </div>
-        </div>
+          <div className="grid gap-2">
+            <Label>Account Created</Label>
+            <Input 
+              value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''} 
+              disabled 
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Email Verified</Label>
+            <Input 
+              value={user?.email_confirmed_at ? 'Yes' : 'No'} 
+              disabled 
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <Separator />
-
-        {/* Security Settings */}
-        <div className="space-y-4">
-          <h4 className="font-medium">Security</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Two-Factor Authentication</Label>
-                <p className="text-xs text-muted-foreground">
-                  Add an extra layer of security to your account
-                </p>
-              </div>
-              <Switch 
-                checked={twoFactorEnabled}
-                onCheckedChange={setTwoFactorEnabled}
+      {/* Update Email */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Change Email Address
+          </CardTitle>
+          <CardDescription>
+            Update your email address. You'll need to confirm both old and new addresses.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={updateEmail} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newEmail">New Email Address</Label>
+              <Input
+                id="newEmail"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email address"
+                required
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input 
-                id="current-password"
-                type="password"
-                placeholder="Enter current password"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input 
-                id="new-password"
-                type="password"
-                placeholder="Enter new password"
-              />
-            </div>
-            
-            <Button variant="outline" size="sm">
-              Update Password
+            <Button type="submit" disabled={emailUpdating || !newEmail.trim()}>
+              {emailUpdating ? 'Updating...' : 'Update Email'}
             </Button>
-          </div>
-        </div>
+          </form>
+        </CardContent>
+      </Card>
 
-        <Separator />
-
-        {/* Danger Zone */}
-        <div className="space-y-4">
-          <h4 className="font-medium text-destructive">Danger Zone</h4>
-          <div className="rounded-lg border border-destructive/20 p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Delete Account</p>
-                <p className="text-xs text-muted-foreground">
-                  Permanently delete your account and all associated data
-                </p>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Account
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Account</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your account
-                      and remove your data from our servers.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDeleteAccount}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete Account
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+      {/* Update Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>
+            Update your password to keep your account secure.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={updatePassword} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+              />
             </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={passwordUpdating || !newPassword || !confirmPassword}>
+              {passwordUpdating ? 'Updating...' : 'Update Password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Danger Zone */}
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Irreversible and destructive actions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account Permanently
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and remove all your data from our servers, including:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Your profile and personal information</li>
+                    <li>All your links and their analytics</li>
+                    <li>Your custom URL and public profile</li>
+                    <li>Any subscription data</li>
+                  </ul>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={deleteAccount}
+                  disabled={deleting}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  {deleting ? 'Deleting...' : 'Yes, delete my account'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

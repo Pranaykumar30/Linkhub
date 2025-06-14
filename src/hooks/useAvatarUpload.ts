@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const useAvatarUpload = () => {
@@ -13,7 +13,7 @@ export const useAvatarUpload = () => {
     if (!user) {
       toast({
         title: "Error",
-        description: "You must be logged in to upload an avatar",
+        description: "You must be logged in to upload an avatar.",
         variant: "destructive",
       });
       return null;
@@ -21,29 +21,31 @@ export const useAvatarUpload = () => {
 
     setUploading(true);
     try {
+      // Create unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
 
-      // Upload the file
+      // Upload file to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { 
-          upsert: true,
-          contentType: file.type 
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      // Get the public URL
+      // Get public URL
       const { data } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
 
       toast({
-        title: "Success",
-        description: "Avatar uploaded successfully",
+        title: "Avatar uploaded",
+        description: "Your avatar has been successfully uploaded.",
       });
 
       return data.publicUrl;
@@ -51,7 +53,7 @@ export const useAvatarUpload = () => {
       console.error('Error uploading avatar:', error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload avatar",
+        description: "Failed to upload avatar. Please try again.",
         variant: "destructive",
       });
       return null;
@@ -64,30 +66,39 @@ export const useAvatarUpload = () => {
     if (!user) return false;
 
     try {
-      const fileName = `${user.id}/avatar`;
-      
-      // List all files starting with the avatar filename
-      const { data: files, error: listError } = await supabase.storage
-        .from('avatars')
-        .list(user.id, {
-          search: 'avatar'
-        });
+      // Get current avatar URL from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
 
-      if (listError) throw listError;
+      if (profile?.avatar_url) {
+        // Extract file path from URL
+        const url = new URL(profile.avatar_url);
+        const filePath = url.pathname.split('/').slice(-2).join('/'); // Get last two parts of path
 
-      // Delete all avatar files for this user
-      if (files && files.length > 0) {
-        const filesToDelete = files.map(file => `${user.id}/${file.name}`);
-        const { error: deleteError } = await supabase.storage
+        // Delete from storage
+        const { error } = await supabase.storage
           .from('avatars')
-          .remove(filesToDelete);
+          .remove([filePath]);
 
-        if (deleteError) throw deleteError;
+        if (error) {
+          console.error('Error deleting file:', error);
+        }
       }
 
+      // Update profile to remove avatar URL
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
       toast({
-        title: "Success",
-        description: "Avatar removed successfully",
+        title: "Avatar removed",
+        description: "Your avatar has been successfully removed.",
       });
 
       return true;
@@ -95,7 +106,7 @@ export const useAvatarUpload = () => {
       console.error('Error removing avatar:', error);
       toast({
         title: "Remove failed",
-        description: error instanceof Error ? error.message : "Failed to remove avatar",
+        description: "Failed to remove avatar. Please try again.",
         variant: "destructive",
       });
       return false;
@@ -105,6 +116,6 @@ export const useAvatarUpload = () => {
   return {
     uploadAvatar,
     removeAvatar,
-    uploading
+    uploading,
   };
 };

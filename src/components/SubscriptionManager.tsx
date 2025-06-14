@@ -5,12 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Crown, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Check, Crown, Zap, Star, Loader2 } from 'lucide-react';
 
-interface Subscription {
-  id: string;
+interface SubscriptionData {
   subscribed: boolean;
   subscription_tier: string | null;
   subscription_end: string | null;
@@ -19,279 +17,264 @@ interface Subscription {
 const SubscriptionManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionData>({
+    subscribed: false,
+    subscription_tier: null,
+    subscription_end: null,
+  });
   const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!user) {
-        setLoading(false);
+  const fetchSubscription = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier, subscription_end')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching subscription:', error);
         return;
       }
 
-      try {
-        const { data, error } = await supabase
-          .from('subscribers')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching subscription:', error);
-        } else {
-          setSubscription(data);
-        }
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-      } finally {
-        setLoading(false);
+      if (data) {
+        setSubscription(data);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchSubscription();
-  }, [user]);
-
-  const handleUpgrade = async (tier: string) => {
-    if (!user) return;
-    
-    setUpgrading(true);
+  const createCheckout = async (plan: string) => {
+    setActionLoading(true);
     try {
-      // In a real app, this would integrate with Stripe
-      // For now, we'll just update the database directly
-      const subscriptionEnd = new Date();
-      subscriptionEnd.setMonth(subscriptionEnd.getMonth() + 1);
-
-      const { error } = await supabase
-        .from('subscribers')
-        .upsert({
-          user_id: user.id,
-          email: user.email!,
-          subscribed: true,
-          subscription_tier: tier,
-          subscription_end: subscriptionEnd.toISOString(),
-        }, {
-          onConflict: 'user_id'
-        });
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { plan }
+      });
 
       if (error) throw error;
 
-      toast({
-        title: "Subscription updated",
-        description: `You've successfully upgraded to ${tier}!`,
-      });
-
-      // Refresh subscription data
-      const { data } = await supabase
-        .from('subscribers')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      setSubscription(data);
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
     } catch (error) {
-      console.error('Error upgrading subscription:', error);
+      console.error('Error creating checkout:', error);
       toast({
-        title: "Upgrade failed",
-        description: "Failed to upgrade subscription. Please try again.",
+        title: "Error",
+        description: "Failed to create checkout session. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setUpgrading(false);
+      setActionLoading(false);
     }
   };
+
+  const manageSubscription = async () => {
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error accessing customer portal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to access customer portal. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscription();
+  }, [user]);
 
   const plans = [
     {
-      name: 'Free',
-      price: '$0',
-      tier: 'free',
+      name: 'Basic',
+      price: '$7.99',
+      description: 'Perfect for getting started',
       features: [
-        'Up to 5 links',
+        'Up to 10 links',
         'Basic analytics',
-        'Standard support',
+        'Custom profile URL',
+        'Email support'
       ],
-      limitations: [
-        'No custom domain',
-        'LinkHub branding',
-        'Limited customization',
-      ]
+      icon: Zap,
+      popular: false,
     },
     {
-      name: 'Pro',
-      price: '$9',
-      tier: 'pro',
+      name: 'Premium',
+      price: '$19.99',
+      description: 'Most popular choice',
       features: [
         'Unlimited links',
         'Advanced analytics',
-        'Custom domain',
-        'Remove branding',
+        'Custom domain support',
         'Priority support',
-        'Custom themes',
+        'Link scheduling',
+        'Custom themes'
       ],
-      limitations: []
+      icon: Crown,
+      popular: true,
     },
     {
-      name: 'Business',
-      price: '$29',
-      tier: 'business',
+      name: 'Enterprise',
+      price: '$49.99',
+      description: 'For power users',
       features: [
-        'Everything in Pro',
+        'Everything in Premium',
         'Team collaboration',
-        'API access',
         'White-label solution',
+        'API access',
         'Dedicated support',
-        'Custom integrations',
+        'Custom integrations'
       ],
-      limitations: []
-    }
+      icon: Star,
+      popular: false,
+    },
   ];
-
-  const currentTier = subscription?.subscription_tier || 'free';
-  const isSubscribed = subscription?.subscribed || false;
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription</CardTitle>
-          <CardDescription>Manage your subscription and billing</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
   }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   return (
     <div className="space-y-6">
       {/* Current Subscription Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5" />
-            Current Subscription
-          </CardTitle>
-          <CardDescription>Your current plan and usage</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xl font-semibold capitalize">{currentTier} Plan</h3>
-                <Badge variant={isSubscribed ? "default" : "secondary"}>
-                  {isSubscribed ? 'Active' : 'Free'}
-                </Badge>
+      {subscription.subscribed && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              Current Subscription
+            </CardTitle>
+            <CardDescription>Manage your active subscription</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="default" className="text-sm">
+                    {subscription.subscription_tier} Plan
+                  </Badge>
+                  <Badge variant="secondary">Active</Badge>
+                </div>
+                {subscription.subscription_end && (
+                  <p className="text-sm text-muted-foreground">
+                    Next billing: {new Date(subscription.subscription_end).toLocaleDateString()}
+                  </p>
+                )}
               </div>
-              {subscription?.subscription_end && (
-                <p className="text-sm text-muted-foreground">
-                  {isSubscribed 
-                    ? `Renews on ${formatDate(subscription.subscription_end)}`
-                    : `Expired on ${formatDate(subscription.subscription_end)}`
-                  }
-                </p>
-              )}
-            </div>
-            {currentTier !== 'free' && (
-              <Button variant="outline" size="sm">
-                Manage Billing
+              <Button 
+                onClick={manageSubscription}
+                disabled={actionLoading}
+                variant="outline"
+              >
+                {actionLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                Manage Subscription
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Pricing Plans */}
+      {/* Subscription Plans */}
       <div className="grid gap-6 md:grid-cols-3">
-        {plans.map((plan) => (
-          <Card 
-            key={plan.tier} 
-            className={`relative ${currentTier === plan.tier ? 'ring-2 ring-primary' : ''}`}
-          >
-            {currentTier === plan.tier && (
-              <Badge className="absolute -top-2 left-1/2 -translate-x-1/2">
-                Current Plan
-              </Badge>
-            )}
-            
-            <CardHeader className="text-center">
-              <CardTitle>{plan.name}</CardTitle>
-              <div className="text-3xl font-bold">
-                {plan.price}
-                {plan.tier !== 'free' && <span className="text-base font-normal">/month</span>}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                {plan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-                {plan.limitations.map((limitation, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <X className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-muted-foreground">{limitation}</span>
-                  </div>
-                ))}
-              </div>
-              
-              {currentTier === plan.tier ? (
-                <Button disabled className="w-full">
-                  Current Plan
-                </Button>
-              ) : plan.tier === 'free' ? (
-                <Button variant="outline" disabled className="w-full">
-                  Downgrade
-                </Button>
-              ) : (
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleUpgrade(plan.tier)}
-                  disabled={upgrading}
-                >
-                  {upgrading ? 'Processing...' : 'Upgrade'}
-                </Button>
+        {plans.map((plan) => {
+          const Icon = plan.icon;
+          const isCurrentPlan = subscription.subscription_tier === plan.name;
+          
+          return (
+            <Card key={plan.name} className={`relative ${plan.popular ? 'border-primary' : ''}`}>
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="px-3 py-1">Most Popular</Badge>
+                </div>
               )}
-            </CardContent>
-          </Card>
-        ))}
+              
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Icon className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>{plan.name}</CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className="text-3xl font-bold">{plan.price}</div>
+                <div className="text-sm text-muted-foreground">per month</div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <ul className="space-y-2">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                
+                <Button 
+                  className="w-full"
+                  variant={isCurrentPlan ? "secondary" : plan.popular ? "default" : "outline"}
+                  onClick={() => createCheckout(plan.name.toLowerCase())}
+                  disabled={actionLoading || isCurrentPlan}
+                >
+                  {actionLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  {isCurrentPlan ? 'Current Plan' : `Choose ${plan.name}`}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Features Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Feature Comparison</CardTitle>
-          <CardDescription>See what's included in each plan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">
-            <p className="mb-2">
-              <strong>Free:</strong> Perfect for personal use with basic link management
+      {/* Free Plan Info */}
+      {!subscription.subscribed && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Free Plan</CardTitle>
+            <CardDescription>You're currently on our free plan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 mb-4">
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                Up to 5 links
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                Basic profile customization
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="h-4 w-4 text-muted-foreground" />
+                LinkHub branding
+              </li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              Upgrade to a paid plan to unlock more features and remove limitations.
             </p>
-            <p className="mb-2">
-              <strong>Pro:</strong> Ideal for creators and professionals who need advanced features
-            </p>
-            <p>
-              <strong>Business:</strong> Best for teams and organizations requiring enterprise features
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

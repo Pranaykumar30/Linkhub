@@ -1,249 +1,206 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Bell, Mail, MessageSquare, Shield, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Bell, Mail, Smartphone, TrendingUp } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface NotificationPreferences {
+  email_notifications: boolean;
+  push_notifications: boolean;
+  marketing_emails: boolean;
+  weekly_reports: boolean;
+  link_alerts: boolean;
+  security_alerts: boolean;
+}
 
 const NotificationSettings = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState({
-    email: {
-      profileUpdates: true,
-      securityAlerts: true,
-      newsletter: false,
-      marketing: false,
-    },
-    push: {
-      mentions: true,
-      messages: true,
-      followers: false,
-      updates: true,
-    },
-    inApp: {
-      all: true,
-      important: true,
-      social: false,
-    }
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    email_notifications: true,
+    push_notifications: false,
+    marketing_emails: false,
+    weekly_reports: true,
+    link_alerts: true,
+    security_alerts: true,
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your notification preferences have been updated.",
-    });
+  useEffect(() => {
+    fetchPreferences();
+  }, [user]);
+
+  const fetchPreferences = async () => {
+    if (!user) return;
+
+    try {
+      // Since we don't have a notification_preferences table yet,
+      // we'll use localStorage as a fallback for now
+      const stored = localStorage.getItem(`notifications_${user.id}`);
+      if (stored) {
+        setPreferences(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error fetching notification preferences:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateEmailNotification = (key: string, value: boolean) => {
-    setNotifications(prev => ({
+  const updatePreferences = async () => {
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      // Store in localStorage for now
+      localStorage.setItem(`notifications_${user.id}`, JSON.stringify(preferences));
+      
+      toast({
+        title: "Preferences updated",
+        description: "Your notification preferences have been saved.",
+      });
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update notification preferences.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePreference = (key: keyof NotificationPreferences, value: boolean) => {
+    setPreferences(prev => ({
       ...prev,
-      email: { ...prev.email, [key]: value }
+      [key]: value
     }));
   };
 
-  const updatePushNotification = (key: string, value: boolean) => {
-    setNotifications(prev => ({
-      ...prev,
-      push: { ...prev.push, [key]: value }
-    }));
-  };
+  const notificationTypes = [
+    {
+      key: 'email_notifications' as keyof NotificationPreferences,
+      title: 'Email Notifications',
+      description: 'Receive notifications via email',
+      icon: Mail,
+    },
+    {
+      key: 'push_notifications' as keyof NotificationPreferences,
+      title: 'Push Notifications',
+      description: 'Receive browser push notifications',
+      icon: Smartphone,
+    },
+    {
+      key: 'weekly_reports' as keyof NotificationPreferences,
+      title: 'Weekly Reports',
+      description: 'Get weekly analytics reports',
+      icon: TrendingUp,
+    },
+    {
+      key: 'link_alerts' as keyof NotificationPreferences,
+      title: 'Link Activity Alerts',
+      description: 'Get notified when your links receive significant traffic',
+      icon: Bell,
+    },
+    {
+      key: 'security_alerts' as keyof NotificationPreferences,
+      title: 'Security Alerts',
+      description: 'Important security and account notifications',
+      icon: Bell,
+    },
+    {
+      key: 'marketing_emails' as keyof NotificationPreferences,
+      title: 'Marketing Emails',
+      description: 'Product updates, tips, and promotional content',
+      icon: Mail,
+    },
+  ];
 
-  const updateInAppNotification = (key: string, value: boolean) => {
-    setNotifications(prev => ({
-      ...prev,
-      inApp: { ...prev.inApp, [key]: value }
-    }));
-  };
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Settings</CardTitle>
+          <CardDescription>Loading your preferences...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          Notification Settings
-        </CardTitle>
-        <CardDescription>
-          Manage how and when you receive notifications
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Email Notifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            <h4 className="font-medium">Email Notifications</h4>
-          </div>
-          <div className="space-y-3 pl-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Profile Updates</Label>
-                <p className="text-xs text-muted-foreground">
-                  When someone views or interacts with your profile
-                </p>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notification Preferences
+          </CardTitle>
+          <CardDescription>
+            Choose how you want to receive notifications and updates
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {notificationTypes.map((type) => {
+            const Icon = type.icon;
+            return (
+              <div key={type.key} className="flex items-center justify-between space-x-2">
+                <div className="flex items-center space-x-3">
+                  <Icon className="h-5 w-5 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <Label htmlFor={type.key} className="text-sm font-medium">
+                      {type.title}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {type.description}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id={type.key}
+                  checked={preferences[type.key]}
+                  onCheckedChange={(checked) => updatePreference(type.key, checked)}
+                />
               </div>
-              <Switch 
-                checked={notifications.email.profileUpdates}
-                onCheckedChange={(value) => updateEmailNotification('profileUpdates', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Security Alerts</Label>
-                <p className="text-xs text-muted-foreground">
-                  Important security updates and login alerts
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.email.securityAlerts}
-                onCheckedChange={(value) => updateEmailNotification('securityAlerts', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Newsletter</Label>
-                <p className="text-xs text-muted-foreground">
-                  Weekly updates and feature announcements
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.email.newsletter}
-                onCheckedChange={(value) => updateEmailNotification('newsletter', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Marketing</Label>
-                <p className="text-xs text-muted-foreground">
-                  Promotional offers and product updates
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.email.marketing}
-                onCheckedChange={(value) => updateEmailNotification('marketing', value)}
-              />
-            </div>
-          </div>
-        </div>
+            );
+          })}
 
-        {/* Push Notifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            <h4 className="font-medium">Push Notifications</h4>
+          <div className="pt-4">
+            <Button onClick={updatePreferences} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </Button>
           </div>
-          <div className="space-y-3 pl-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Mentions</Label>
-                <p className="text-xs text-muted-foreground">
-                  When someone mentions you in a comment
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.push.mentions}
-                onCheckedChange={(value) => updatePushNotification('mentions', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Direct Messages</Label>
-                <p className="text-xs text-muted-foreground">
-                  New direct messages and replies
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.push.messages}
-                onCheckedChange={(value) => updatePushNotification('messages', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">New Followers</Label>
-                <p className="text-xs text-muted-foreground">
-                  When someone starts following you
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.push.followers}
-                onCheckedChange={(value) => updatePushNotification('followers', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">App Updates</Label>
-                <p className="text-xs text-muted-foreground">
-                  New features and important updates
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.push.updates}
-                onCheckedChange={(value) => updatePushNotification('updates', value)}
-              />
-            </div>
-          </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* In-App Notifications */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <h4 className="font-medium">In-App Notifications</h4>
-          </div>
-          <div className="space-y-3 pl-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">All Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Show all in-app notifications
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.inApp.all}
-                onCheckedChange={(value) => updateInAppNotification('all', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Important Only</Label>
-                <p className="text-xs text-muted-foreground">
-                  Only show important notifications
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.inApp.important}
-                onCheckedChange={(value) => updateInAppNotification('important', value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-sm">Social Activity</Label>
-                <p className="text-xs text-muted-foreground">
-                  Likes, comments, and social interactions
-                </p>
-              </div>
-              <Switch 
-                checked={notifications.inApp.social}
-                onCheckedChange={(value) => updateInAppNotification('social', value)}
-              />
+      <Card>
+        <CardHeader>
+          <CardTitle>Email Frequency</CardTitle>
+          <CardDescription>
+            Control how often you receive email notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              You can adjust individual notification types above. Security alerts will always be sent immediately for account safety.
+            </p>
+            <div className="grid gap-2">
+              <Label className="text-sm font-medium">Current email: {user?.email}</Label>
+              <p className="text-xs text-muted-foreground">
+                To change your email address, visit Account Settings.
+              </p>
             </div>
           </div>
-        </div>
-
-        <Button onClick={handleSave} className="w-full">
-          Save Notification Settings
-        </Button>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
