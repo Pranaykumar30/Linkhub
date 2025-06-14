@@ -52,6 +52,25 @@ const Dashboard = () => {
 
     const fetchSubscription = async () => {
       try {
+        // Check if user is admin first
+        const { data: adminData } = await supabase
+          .from('admin_users')
+          .select('admin_role')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        // If user is admin, set Enterprise subscription
+        if (adminData) {
+          setSubscription({
+            subscribed: true,
+            subscription_tier: 'Enterprise',
+            subscription_end: null,
+          });
+          setSubscriptionLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('subscribers')
           .select('subscribed, subscription_tier, subscription_end')
@@ -291,9 +310,16 @@ const Dashboard = () => {
                       
                       <div className="space-y-2">
                         <h4 className="font-medium">Current Plan</h4>
-                        <Badge variant={subscription.subscribed ? "default" : "outline"}>
-                          {subscription.subscription_tier || 'Free'}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={subscription.subscribed ? "default" : "outline"}>
+                            {subscription.subscription_tier || 'Free'}
+                          </Badge>
+                          {limits.isAdmin && (
+                            <Badge variant="destructive" className="text-xs">
+                              Admin
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-2">

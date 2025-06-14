@@ -23,6 +23,7 @@ interface SubscriptionLimits {
   dedicatedSupportEnabled: boolean;
   customIntegrationsEnabled: boolean;
   advancedSecurityEnabled: boolean;
+  isAdmin?: boolean;
 }
 
 // Test subscription data for different plans
@@ -141,6 +142,7 @@ export const useSubscriptionLimits = () => {
     dedicatedSupportEnabled: false,
     customIntegrationsEnabled: false,
     advancedSecurityEnabled: false,
+    isAdmin: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -162,7 +164,10 @@ export const useSubscriptionLimits = () => {
       // If user is admin, automatically grant Enterprise privileges
       if (adminData) {
         const enterpriseLimits = getTestSubscriptionLimits('Enterprise');
-        setLimits(enterpriseLimits);
+        setLimits({
+          ...enterpriseLimits,
+          isAdmin: true,
+        });
         setLoading(false);
         return;
       }
@@ -198,10 +203,14 @@ export const useSubscriptionLimits = () => {
           apiAccessEnabled: data.api_access_enabled || tierLimits.apiAccessEnabled,
           whiteLabelEnabled: data.white_label_enabled || tierLimits.whiteLabelEnabled,
           subscribed: data.subscribed || false,
+          isAdmin: false,
         });
       } else {
         // No subscription record, use free plan defaults
-        setLimits(getTestSubscriptionLimits(null));
+        setLimits({
+          ...getTestSubscriptionLimits(null),
+          isAdmin: false,
+        });
       }
     } catch (error) {
       console.error('Error fetching subscription limits:', error);
