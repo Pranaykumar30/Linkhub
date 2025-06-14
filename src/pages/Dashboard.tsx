@@ -22,6 +22,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { profile, loading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (!user) {
     return (
@@ -188,7 +189,7 @@ const Dashboard = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Tabs defaultValue="overview" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="links">Links</TabsTrigger>
@@ -239,30 +240,36 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                      <Button variant="outline" onClick={() => setIsEditing(true)}>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setIsEditing(true)}
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Profile
                       </Button>
                       
-                      <Button variant="outline" asChild>
-                        <span>
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Manage Links
-                        </span>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setActiveTab('links')}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Manage Links
                       </Button>
                       
-                      <Button variant="outline" asChild>
-                        <span>
-                          <Activity className="h-4 w-4 mr-2" />
-                          View Analytics
-                        </span>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setActiveTab('analytics')}
+                      >
+                        <Activity className="h-4 w-4 mr-2" />
+                        View Analytics
                       </Button>
                       
-                      <Button variant="outline" asChild>
-                        <span>
-                          <Settings className="h-4 w-4 mr-2" />
-                          Upgrade Plan
-                        </span>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setActiveTab('subscription')}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Upgrade Plan
                       </Button>
                     </div>
                   </CardContent>
