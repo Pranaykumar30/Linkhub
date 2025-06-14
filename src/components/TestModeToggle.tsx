@@ -10,10 +10,10 @@ import { TestTube, Crown, Zap, Star, Sparkles } from 'lucide-react';
 
 const TestModeToggle = () => {
   const { limits, setTestMode } = useSubscriptionLimits();
-  const [selectedPlan, setSelectedPlan] = useState<string>('');
+  const [selectedPlan, setSelectedPlan] = useState<string>('free');
 
   const plans = [
-    { value: '', label: 'Free Plan', icon: Sparkles, description: '5 links, basic features' },
+    { value: 'free', label: 'Free Plan', icon: Sparkles, description: '5 links, basic features' },
     { value: 'Basic', label: 'Basic Plan', icon: Zap, description: '25 links, custom URLs' },
     { value: 'Premium', label: 'Premium Plan', icon: Crown, description: '100 links, advanced analytics' },
     { value: 'Enterprise', label: 'Enterprise Plan', icon: Star, description: 'Unlimited links, all features' },
@@ -21,11 +21,14 @@ const TestModeToggle = () => {
 
   const handlePlanChange = (value: string) => {
     setSelectedPlan(value);
-    setTestMode(value || null);
+    // Convert 'free' back to null for the setTestMode function
+    setTestMode(value === 'free' ? null : value);
   };
 
   const getCurrentPlanInfo = () => {
-    return plans.find(plan => plan.value === (limits.subscriptionTier || '')) || plans[0];
+    // Convert null subscription tier to 'free' for display
+    const currentTier = limits.subscriptionTier || 'free';
+    return plans.find(plan => plan.value === currentTier) || plans[0];
   };
 
   const currentPlan = getCurrentPlanInfo();
