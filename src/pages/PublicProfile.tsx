@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,28 +45,27 @@ const PublicProfile = () => {
       if (!customUrl) return;
 
       try {
-        // Get profile by custom URL or user ID (for free plan users)
+        // First try to find by username (default behavior for linkhub.app/username)
         let profileData = null;
         
-        // First try to find by custom_url
-        const { data: customUrlProfile } = await supabase
+        const { data: usernameProfile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('custom_url', customUrl)
+          .eq('username', customUrl)
           .single();
 
-        if (customUrlProfile) {
-          profileData = customUrlProfile;
+        if (usernameProfile) {
+          profileData = usernameProfile;
         } else {
-          // If not found by custom_url, try by user ID (for free plan LinkHub URLs)
-          const { data: userIdProfile } = await supabase
+          // If not found by username, try by custom_url (for upgraded plans)
+          const { data: customUrlProfile } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', customUrl)
+            .eq('custom_url', customUrl)
             .single();
           
-          if (userIdProfile) {
-            profileData = userIdProfile;
+          if (customUrlProfile) {
+            profileData = customUrlProfile;
           }
         }
 
@@ -148,6 +146,14 @@ const PublicProfile = () => {
     return <Badge variant="default" className="text-xs">{subscription.subscription_tier} Plan</Badge>;
   };
 
+  const getPublicUrl = () => {
+    // Show the actual URL being used
+    if (profile?.custom_url && subscription.subscribed && subscription.subscription_tier !== 'Free') {
+      return `linkhub.app/${profile.custom_url}`;
+    }
+    return `linkhub.app/${profile?.username || 'user'}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
@@ -199,9 +205,9 @@ const PublicProfile = () => {
             {profile.full_name || 'No name set'}
           </h1>
           
-          {profile.username && (
-            <p className="text-muted-foreground mb-3">@{profile.username}</p>
-          )}
+          <p className="text-muted-foreground mb-3 text-sm">
+            {getPublicUrl()}
+          </p>
           
           <div className="mb-3">
             {getPlanBadge()}
