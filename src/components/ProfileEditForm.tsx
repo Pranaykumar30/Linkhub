@@ -44,6 +44,7 @@ const ProfileEditForm = ({ profile, onClose, onUpdate }: ProfileEditFormProps) =
     username: profile?.username || '',
     bio: profile?.bio || '',
     website: profile?.website || '',
+    custom_url: profile?.custom_url || '',
     avatar_url: profile?.avatar_url || '',
   });
 
@@ -129,9 +130,14 @@ const ProfileEditForm = ({ profile, onClose, onUpdate }: ProfileEditFormProps) =
       website = `https://${website}`;
     }
 
+    // Clean up custom URL - remove spaces and special characters, make lowercase
+    let customUrl = formData.custom_url.trim().toLowerCase();
+    customUrl = customUrl.replace(/[^a-z0-9-_]/g, '');
+
     const updates = {
       ...formData,
       website: website || null,
+      custom_url: customUrl || null,
       full_name: formData.full_name.trim() || null,
       username: formData.username.trim() || null,
       bio: formData.bio.trim() || null,
@@ -228,6 +234,24 @@ const ProfileEditForm = ({ profile, onClose, onUpdate }: ProfileEditFormProps) =
                 onChange={handleChange}
                 placeholder="Enter your username"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="custom_url">Custom URL</Label>
+              <div className="flex items-center">
+                <span className="text-sm text-muted-foreground mr-2">yourdomain.com/</span>
+                <Input
+                  id="custom_url"
+                  name="custom_url"
+                  value={formData.custom_url}
+                  onChange={handleChange}
+                  placeholder="your-custom-url"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This will be your unique public profile URL. Only letters, numbers, hyphens, and underscores allowed.
+              </p>
             </div>
 
             <div className="space-y-2">
