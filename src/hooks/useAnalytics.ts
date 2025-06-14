@@ -132,7 +132,6 @@ export const useAnalytics = () => {
     if (!user?.id) return;
 
     let linksChannel: any = null;
-    let clicksChannel: any = null;
     
     const setupRealtimeSubscriptions = () => {
       console.log('Setting up analytics realtime subscriptions');
@@ -145,7 +144,7 @@ export const useAnalytics = () => {
         .on(
           'postgres_changes',
           {
-            event: 'UPDATE',
+            event: '*',
             schema: 'public',
             table: 'links',
             filter: `user_id=eq.${user.id}`
@@ -158,26 +157,6 @@ export const useAnalytics = () => {
         .subscribe((status) => {
           console.log(`Analytics links subscription status: ${status}`);
         });
-
-      // Listen for new click records
-      clicksChannel = supabase
-        .channel(`analytics-clicks-${user.id}-${timestamp}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'link_clicks'
-          },
-          (payload) => {
-            console.log('Analytics: New click recorded:', payload);
-            // Check if this click belongs to user's links by fetching fresh data
-            fetchAnalytics();
-          }
-        )
-        .subscribe((status) => {
-          console.log(`Analytics clicks subscription status: ${status}`);
-        });
     };
 
     setupRealtimeSubscriptions();
@@ -186,10 +165,6 @@ export const useAnalytics = () => {
       if (linksChannel) {
         console.log('Cleaning up analytics links subscription');
         supabase.removeChannel(linksChannel);
-      }
-      if (clicksChannel) {
-        console.log('Cleaning up analytics clicks subscription');
-        supabase.removeChannel(clicksChannel);
       }
     };
   }, [user?.id]);
