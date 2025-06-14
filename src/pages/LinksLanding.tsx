@@ -1,11 +1,13 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLinks } from '@/hooks/useLinks';
+import { useAdmin } from '@/hooks/useAdmin';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExternalLink, Settings, Plus, BarChart3, Home } from 'lucide-react';
+import { ExternalLink, Settings, Plus, BarChart3, Home, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AuthButton from '@/components/AuthButton';
 
@@ -13,6 +15,7 @@ const LinksLanding = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const { links, loading: linksLoading, recordClick } = useLinks();
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
   if (!user) {
     return (
@@ -67,6 +70,16 @@ const LinksLanding = () => {
                     </AvatarFallback>
                   </Avatar>
                 </div>
+              )}
+              
+              {/* Admin Button - only show if user is admin and not loading */}
+              {!adminLoading && isAdmin && (
+                <Link to="/admin">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
               )}
               
               <AuthButton />
