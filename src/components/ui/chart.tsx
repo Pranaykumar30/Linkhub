@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -146,7 +147,7 @@ const ChartTooltipContent = React.forwardRef<
 
       if (labelFormatter) {
         return (
-          <div className={cn("font-medium text-foreground", labelClassName)}>
+          <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>
             {labelFormatter(value, payload)}
           </div>
         )
@@ -156,7 +157,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium text-foreground", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -177,7 +178,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border bg-popover text-popover-foreground px-2.5 py-1.5 text-xs shadow-xl",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2.5 py-1.5 text-xs shadow-xl dark:border-gray-700",
           className
         )}
       >
@@ -232,12 +233,12 @@ const ChartTooltipContent = React.forwardRef<
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-popover-foreground">
+                        <span className="text-gray-900 dark:text-gray-100">
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-popover-foreground">
+                        <span className="font-mono font-medium tabular-nums text-gray-900 dark:text-gray-100">
                           {item.value.toLocaleString()}
                         </span>
                       )}
