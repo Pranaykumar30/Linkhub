@@ -44,6 +44,8 @@ export const useAnalytics = () => {
     }
 
     try {
+      console.log('Fetching analytics for user:', user.id);
+      
       // Get user's links
       const { data: links, error: linksError } = await supabase
         .from('links')
@@ -55,6 +57,8 @@ export const useAnalytics = () => {
       const totalLinks = links?.length || 0;
       const activeLinks = links?.filter(link => link.is_active).length || 0;
       const totalClicks = links?.reduce((sum, link) => sum + link.click_count, 0) || 0;
+
+      console.log('Analytics - Total clicks:', totalClicks, 'Total links:', totalLinks);
 
       // Get top performing links
       const topPerformingLinks = links
@@ -103,14 +107,17 @@ export const useAnalytics = () => {
         .sort((a, b) => b.clicks - a.clicks)
         .slice(0, 10);
 
-      setAnalytics({
+      const newAnalytics = {
         totalClicks,
         totalLinks,
         activeLinks,
         topPerformingLinks,
         clicksByDate,
         clicksByCountry,
-      });
+      };
+
+      console.log('Analytics updated:', newAnalytics);
+      setAnalytics(newAnalytics);
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast({
@@ -127,111 +134,66 @@ export const useAnalytics = () => {
     fetchAnalytics();
   }, [user]);
 
-  // Set up real-time subscriptions for analytics updates with improved reliability
+  // Set up real-time subscriptions for analytics updates
   useEffect(() => {
     if (!user?.id) return;
 
-    let linksChannel: any = null;
-    let clicksChannel: any = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
+    console.log('Setting up analytics realtime subscriptions for user:', user.id);
     
-    const setupRealtimeSubscriptions = () => {
-      // Clean up existing channels
-      if (linksChannel) {
-        supabase.removeChannel(linksChannel);
-      }
-      if (clicksChannel) {
-        supabase.removeChannel(clicksChannel);
-      }
+    // Listen for link changes (click count updates)
+    const linksChannel = supabase
+      .channel(`analytics-links-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'links',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Analytics: Link updated via realtime:', payload);
+          fetchAnalytics();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Analytics links subscription status: ${status}`);
+      });
 
-      console.log('Setting up analytics realtime subscriptions');
-      
-      const timestamp = Date.now();
-      
-      // Listen for link changes (click count updates)
-      linksChannel = supabase
-        .channel(`analytics-links-realtime-${user.id}-${timestamp}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'links',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('Analytics: Link updated via realtime:', payload);
+    // Listen for new click records
+    const clicksChannel = supabase
+      .channel(`analytics-clicks-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'link_clicks'
+        },
+        async (payload) => {
+          console.log('Analytics: New click recorded via realtime:', payload);
+          
+          // Check if this click belongs to user's links
+          const { data: linkData } = await supabase
+            .from('links')
+            .select('user_id')
+            .eq('id', payload.new.link_id)
+            .single();
+          
+          if (linkData?.user_id === user.id) {
+            console.log('Click belongs to current user, refreshing analytics');
             fetchAnalytics();
           }
-        )
-        .subscribe((status) => {
-          console.log(`Analytics links subscription status: ${status}`);
-          
-          if (status === 'TIMED_OUT' || status === 'CLOSED') {
-            console.log('Analytics links subscription failed, attempting reconnect...');
-            if (!reconnectTimeout) {
-              reconnectTimeout = setTimeout(() => {
-                setupRealtimeSubscriptions();
-                reconnectTimeout = null;
-              }, 5000);
-            }
-          }
-        });
-
-      // Listen for new click records
-      clicksChannel = supabase
-        .channel(`analytics-clicks-realtime-${user.id}-${timestamp}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'link_clicks'
-          },
-          async (payload) => {
-            console.log('Analytics: New click recorded via realtime:', payload);
-            // Check if this click belongs to user's links
-            const { data: linkData } = await supabase
-              .from('links')
-              .select('user_id')
-              .eq('id', payload.new.link_id)
-              .single();
-            
-            if (linkData?.user_id === user.id) {
-              console.log('Click belongs to current user, refreshing analytics');
-              fetchAnalytics();
-            }
-          }
-        )
-        .subscribe((status) => {
-          console.log(`Analytics clicks subscription status: ${status}`);
-          
-          if (status === 'TIMED_OUT' || status === 'CLOSED') {
-            console.log('Analytics clicks subscription failed, attempting reconnect...');
-            if (!reconnectTimeout) {
-              reconnectTimeout = setTimeout(() => {
-                setupRealtimeSubscriptions();
-                reconnectTimeout = null;
-              }, 5000);
-            }
-          }
-        });
-    };
-
-    setupRealtimeSubscriptions();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Analytics clicks subscription status: ${status}`);
+      });
 
     return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (linksChannel) {
-        console.log('Cleaning up analytics links subscription');
-        supabase.removeChannel(linksChannel);
-      }
-      if (clicksChannel) {
-        console.log('Cleaning up analytics clicks subscription');
-        supabase.removeChannel(clicksChannel);
-      }
+      console.log('Cleaning up analytics subscriptions');
+      supabase.removeChannel(linksChannel);
+      supabase.removeChannel(clicksChannel);
     };
   }, [user?.id]);
 

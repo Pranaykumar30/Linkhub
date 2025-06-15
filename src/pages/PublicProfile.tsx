@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -99,49 +98,9 @@ const PublicProfile = () => {
 
   const handleLinkClick = async (link: PublicLink) => {
     try {
-      console.log('Public profile: Recording click for link:', link.id);
+      console.log('PublicProfile: Starting click recording for link:', link.id);
       
-      // Update click count optimistically
-      setLinks(prev => prev.map(l => 
-        l.id === link.id 
-          ? { ...l, click_count: l.click_count + 1 }
-          : l
-      ));
-
-      // Get current click count and increment it
-      const { data: currentLink, error: fetchError } = await supabase
-        .from('links')
-        .select('click_count')
-        .eq('id', link.id)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching current click count:', fetchError);
-        return;
-      }
-
-      const newClickCount = (currentLink?.click_count || 0) + 1;
-
-      // Update the click count in the database - this will trigger real-time updates
-      const { error: updateError } = await supabase
-        .from('links')
-        .update({ click_count: newClickCount })
-        .eq('id', link.id);
-
-      if (updateError) {
-        console.error('Error updating click count:', updateError);
-        // Revert optimistic update on error
-        setLinks(prev => prev.map(l => 
-          l.id === link.id 
-            ? { ...l, click_count: l.click_count - 1 }
-            : l
-        ));
-        return;
-      }
-
-      console.log('Public profile: Click count updated successfully');
-
-      // Record click analytics - this will trigger real-time updates for analytics
+      // First, record the click analytics
       const { error: analyticsError } = await supabase
         .from('link_clicks')
         .insert({
@@ -153,17 +112,36 @@ const PublicProfile = () => {
       if (analyticsError) {
         console.error('Error recording click analytics:', analyticsError);
       } else {
-        console.log('Public profile: Click analytics recorded successfully');
+        console.log('PublicProfile: Click analytics recorded successfully');
+      }
+
+      // Then update the click count - use RPC or direct update
+      const { data: updateResult, error: updateError } = await supabase.rpc('increment_click_count', { 
+        link_id: link.id 
+      });
+
+      if (updateError) {
+        console.error('RPC failed, trying direct update:', updateError);
+        // Fallback to direct update
+        const { error: directUpdateError } = await supabase
+          .from('links')
+          .update({ 
+            click_count: link.click_count + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', link.id);
+
+        if (directUpdateError) {
+          console.error('Direct update also failed:', directUpdateError);
+        } else {
+          console.log('PublicProfile: Direct update successful');
+        }
+      } else {
+        console.log('PublicProfile: RPC update successful:', updateResult);
       }
 
     } catch (error) {
       console.error('Error in handleLinkClick:', error);
-      // Revert optimistic update on error
-      setLinks(prev => prev.map(l => 
-        l.id === link.id 
-          ? { ...l, click_count: l.click_count - 1 }
-          : l
-      ));
     }
 
     // Navigate to the link

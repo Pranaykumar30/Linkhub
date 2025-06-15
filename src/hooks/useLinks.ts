@@ -49,6 +49,7 @@ export const useLinks = () => {
           variant: "destructive",
         });
       } else {
+        console.log('Links fetched successfully:', data?.length);
         setLinks(data || []);
       }
     } catch (error) {
@@ -184,6 +185,7 @@ export const useLinks = () => {
 
   const recordClick = async (linkId: string) => {
     try {
+      console.log('useLinks: Recording click for link:', linkId);
       const currentLink = links.find(l => l.id === linkId);
       const newClickCount = (currentLink?.click_count || 0) + 1;
 
@@ -194,10 +196,13 @@ export const useLinks = () => {
           : link
       ));
 
-      // Update the database
+      // Update the database with explicit updated_at timestamp
       const { error: updateError } = await supabase
         .from('links')
-        .update({ click_count: newClickCount })
+        .update({ 
+          click_count: newClickCount,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', linkId);
 
       if (updateError) {
@@ -206,6 +211,8 @@ export const useLinks = () => {
         fetchLinks();
         return;
       }
+
+      console.log('useLinks: Click count updated successfully');
 
       // Record click analytics
       await supabase
@@ -227,63 +234,35 @@ export const useLinks = () => {
     fetchLinks();
   }, [user]);
 
-  // Set up real-time subscription for links with improved reliability
+  // Set up real-time subscription for links
   useEffect(() => {
     if (!user?.id) return;
 
-    let channel: any = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
+    console.log('Setting up links realtime subscription for user:', user.id);
     
-    const setupRealtimeSubscription = () => {
-      // Clean up existing channel if any
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-
-      const timestamp = Date.now();
-      const channelName = `links-realtime-${user.id}-${timestamp}`;
-      
-      console.log(`Setting up links realtime subscription: ${channelName}`);
-      
-      channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-            schema: 'public',
-            table: 'links',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('Links realtime update received:', payload);
-            // Always refetch to ensure data consistency
-            fetchLinks();
-          }
-        )
-        .subscribe((status) => {
-          console.log(`Links subscription status: ${status}`);
-          
-          // Handle subscription failures and timeouts
-          if (status === 'TIMED_OUT' || status === 'CLOSED') {
-            console.log('Links subscription failed, attempting reconnect in 5 seconds...');
-            reconnectTimeout = setTimeout(() => {
-              setupRealtimeSubscription();
-            }, 5000);
-          }
-        });
-    };
-
-    setupRealtimeSubscription();
+    const channel = supabase
+      .channel(`links-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'links',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Links realtime update received:', payload);
+          // Refetch to ensure data consistency
+          fetchLinks();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Links subscription status: ${status}`);
+      });
 
     return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (channel) {
-        console.log(`Cleaning up links subscription: ${channel.topic}`);
-        supabase.removeChannel(channel);
-      }
+      console.log('Cleaning up links subscription');
+      supabase.removeChannel(channel);
     };
   }, [user?.id]);
 
