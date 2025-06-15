@@ -146,8 +146,8 @@ const ChartTooltipContent = React.forwardRef<
 
       if (labelFormatter) {
         return (
-          <div className={cn("font-medium text-white", labelClassName)}>
-            <div className="text-white">
+          <div className={cn("font-medium", labelClassName)}>
+            <div className="dark:text-white text-gray-900">
               {labelFormatter(value, payload)}
             </div>
           </div>
@@ -158,7 +158,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium text-white", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium dark:text-white text-gray-900", labelClassName)}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -179,7 +179,8 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border bg-white dark:bg-black text-gray-900 dark:text-white px-2.5 py-1.5 text-xs shadow-xl border-gray-300 dark:border-gray-600",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+          "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
           className
         )}
       >
@@ -194,7 +195,8 @@ const ChartTooltipContent = React.forwardRef<
               <div
                 key={item.dataKey}
                 className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 text-gray-900 dark:text-white",
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
+                  "text-gray-900 dark:text-white",
                   indicator === "dot" && "items-center"
                 )}
               >
@@ -230,13 +232,14 @@ const ChartTooltipContent = React.forwardRef<
                     )}
                     <div
                       className={cn(
-                        "flex flex-1 justify-between leading-none text-gray-900 dark:text-white",
+                        "flex flex-1 justify-between leading-none",
+                        "text-gray-900 dark:text-white",
                         nestLabel ? "items-end" : "items-center"
                       )}
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? (
-                          <div className="text-white">
+                          <div className="dark:text-white text-gray-900">
                             {tooltipLabel}
                           </div>
                         ) : null}
