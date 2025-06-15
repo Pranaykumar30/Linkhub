@@ -59,28 +59,30 @@ export const useTeams = () => {
 
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      const { data, error } = await supabase
+      // First get team members
+      const { data: membersData, error: membersError } = await supabase
         .from('team_members')
-        .select(`
-          *,
-          profiles!team_members_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('team_id', teamId);
 
-      if (error) throw error;
-      
-      const membersWithProfiles = (data || []).map(member => ({
-        ...member,
-        profiles: member.profiles ? {
-          full_name: member.profiles.full_name,
-          username: member.profiles.username,
-          avatar_url: member.profiles.avatar_url
-        } : undefined
-      }));
+      if (membersError) throw membersError;
+
+      // Then get profile data for each member
+      const membersWithProfiles = await Promise.all(
+        (membersData || []).map(async (member) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name, username, avatar_url')
+            .eq('id', member.user_id)
+            .single();
+
+          return {
+            ...member,
+            status: member.role === 'owner' ? 'accepted' : 'pending', // Default status based on role
+            profiles: profileData || undefined
+          } as TeamMember;
+        })
+      );
 
       setTeamMembers(prev => ({ ...prev, [teamId]: membersWithProfiles }));
     } catch (error) {
@@ -111,7 +113,6 @@ export const useTeams = () => {
           team_id: data.id,
           user_id: user.id,
           role: 'owner',
-          status: 'accepted',
           joined_at: new Date().toISOString()
         }]);
 
