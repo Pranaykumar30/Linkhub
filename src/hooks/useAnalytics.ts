@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,7 +73,7 @@ export const useAnalytics = () => {
           click_count: link.click_count || 0,
         })) || [];
 
-      // Get detailed click data for charts (last 30 days)
+      // Get detailed click data for charts (last 30 days) but use it ONLY for geographic data
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -84,7 +85,7 @@ export const useAnalytics = () => {
       if (linkIds.length > 0) {
         const { data: clickData, error: clickError } = await supabase
           .from('link_clicks')
-          .select('clicked_at, country')
+          .select('clicked_at, country, link_id')
           .in('link_id', linkIds)
           .gte('clicked_at', thirtyDaysAgo.toISOString());
 
@@ -94,16 +95,29 @@ export const useAnalytics = () => {
           console.log('Found click records:', clickData?.length || 0);
         }
 
-        // Process clicks by date
-        clicksByDate = Array.from({ length: 30 }, (_, i) => {
+        // Instead of using link_clicks for date aggregation, we'll use the links table data
+        // and distribute clicks across the last 30 days based on actual click records
+        const clicksByDateMap = new Map<string, number>();
+        
+        // Initialize all dates with 0
+        for (let i = 0; i < 30; i++) {
           const date = new Date();
           date.setDate(date.getDate() - i);
           const dateStr = date.toISOString().split('T')[0];
-          const clicks = clickData?.filter(click => 
-            click.clicked_at.startsWith(dateStr)
-          ).length || 0;
-          return { date: dateStr, clicks };
-        }).reverse();
+          clicksByDateMap.set(dateStr, 0);
+        }
+
+        // Count actual clicks by date from link_clicks table
+        clickData?.forEach(click => {
+          const dateStr = click.clicked_at.split('T')[0];
+          if (clicksByDateMap.has(dateStr)) {
+            clicksByDateMap.set(dateStr, (clicksByDateMap.get(dateStr) || 0) + 1);
+          }
+        });
+
+        clicksByDate = Array.from(clicksByDateMap.entries())
+          .map(([date, clicks]) => ({ date, clicks }))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         // Process clicks by country
         const countryClickCounts = clickData?.reduce((acc, click) => {
@@ -117,6 +131,14 @@ export const useAnalytics = () => {
           .map(([country, clicks]) => ({ country, clicks }))
           .sort((a, b) => b.clicks - a.clicks)
           .slice(0, 10);
+      } else {
+        // If no links, create empty data for 30 days
+        clicksByDate = Array.from({ length: 30 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          return { date: dateStr, clicks: 0 };
+        }).reverse();
       }
 
       const newAnalytics = {
@@ -129,6 +151,9 @@ export const useAnalytics = () => {
       };
 
       console.log('Analytics updated:', newAnalytics);
+      console.log('Total clicks in graph:', clicksByDate.reduce((sum, day) => sum + day.clicks, 0));
+      console.log('Total clicks in cards:', totalClicks);
+      
       setAnalytics(newAnalytics);
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -201,7 +226,7 @@ export const useAnalytics = () => {
             // Small delay to ensure the links table click_count is also updated
             setTimeout(() => {
               fetchAnalytics();
-            }, 500);
+            }, 1000);
           }
         }
       )
