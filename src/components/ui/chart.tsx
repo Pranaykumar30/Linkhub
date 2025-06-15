@@ -130,6 +130,32 @@ const ChartTooltipContent = React.forwardRef<
     ref
   ) => {
     const { config } = useChart()
+    const [isDark, setIsDark] = React.useState(false)
+
+    // Check theme on mount and when document changes
+    React.useEffect(() => {
+      const checkTheme = () => {
+        const root = document.documentElement
+        const hasThemeBlue = root.classList.contains('theme-blue')
+        const hasThemeGreen = root.classList.contains('theme-green')
+        const hasThemePurple = root.classList.contains('theme-purple')
+        const hasDark = root.classList.contains('dark')
+        
+        // Set dark if explicitly dark class OR if using any premium theme (which are dark-based)
+        setIsDark(hasDark || hasThemeBlue || hasThemeGreen || hasThemePurple)
+      }
+
+      checkTheme()
+      
+      // Create observer to watch for class changes
+      const observer = new MutationObserver(checkTheme)
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      })
+
+      return () => observer.disconnect()
+    }, [])
 
     const tooltipLabel = React.useMemo(() => {
       if (hideLabel || !payload?.length) {
@@ -147,7 +173,7 @@ const ChartTooltipContent = React.forwardRef<
       if (labelFormatter) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            <div className="text-gray-900 dark:text-white">
+            <div style={{ color: isDark ? '#ffffff' : '#111827' }}>
               {labelFormatter(value, payload)}
             </div>
           </div>
@@ -158,7 +184,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium text-gray-900 dark:text-white", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium", labelClassName)} style={{ color: isDark ? '#ffffff' : '#111827' }}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -167,6 +193,7 @@ const ChartTooltipContent = React.forwardRef<
       labelClassName,
       config,
       labelKey,
+      isDark,
     ])
 
     if (!active || !payload?.length) {
@@ -180,13 +207,12 @@ const ChartTooltipContent = React.forwardRef<
         ref={ref}
         className={cn(
           "grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
-          "bg-white text-gray-900 border-gray-300",
-          "dark:bg-gray-900 dark:text-white dark:border-gray-600",
           className
         )}
         style={{
-          backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff',
-          color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827',
+          backgroundColor: isDark ? '#111827' : '#ffffff',
+          color: isDark ? '#ffffff' : '#111827',
+          borderColor: isDark ? '#374151' : '#d1d5db',
         }}
       >
         {!nestLabel ? tooltipLabel : null}
@@ -201,12 +227,11 @@ const ChartTooltipContent = React.forwardRef<
                 key={item.dataKey}
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
-                  "text-gray-900 dark:text-white",
                   indicator === "dot" && "items-center"
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  <div className="text-gray-900 dark:text-white" style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}>
+                  <div style={{ color: isDark ? '#ffffff' : '#111827' }}>
                     {formatter(item.value, item.name, item, index, item.payload)}
                   </div>
                 ) : (
@@ -238,30 +263,23 @@ const ChartTooltipContent = React.forwardRef<
                     <div
                       className={cn(
                         "flex flex-1 justify-between leading-none",
-                        "text-gray-900 dark:text-white",
                         nestLabel ? "items-end" : "items-center"
                       )}
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? (
-                          <div 
-                            className="text-gray-900 dark:text-white"
-                            style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
-                          >
+                          <div style={{ color: isDark ? '#ffffff' : '#111827' }}>
                             {tooltipLabel}
                           </div>
                         ) : null}
-                        <span 
-                          className="text-gray-900 dark:text-white"
-                          style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
-                        >
+                        <span style={{ color: isDark ? '#ffffff' : '#111827' }}>
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
                         <span 
-                          className="font-mono font-medium tabular-nums text-gray-900 dark:text-white"
-                          style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
+                          className="font-mono font-medium tabular-nums"
+                          style={{ color: isDark ? '#ffffff' : '#111827' }}
                         >
                           {item.value.toLocaleString()}
                         </span>
