@@ -146,8 +146,8 @@ const ChartTooltipContent = React.forwardRef<
 
       if (labelFormatter) {
         return (
-          <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>
-            <div className="text-gray-900 dark:text-gray-100">
+          <div className={cn("font-medium text-white", labelClassName)}>
+            <div className="text-white">
               {labelFormatter(value, payload)}
             </div>
           </div>
@@ -158,7 +158,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium text-white", labelClassName)}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -179,7 +179,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2.5 py-1.5 text-xs shadow-xl dark:border-gray-700",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border bg-white dark:bg-black text-gray-900 dark:text-white px-2.5 py-1.5 text-xs shadow-xl border-gray-300 dark:border-gray-600",
           className
         )}
       >
@@ -194,12 +194,12 @@ const ChartTooltipContent = React.forwardRef<
               <div
                 key={item.dataKey}
                 className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 text-gray-900 dark:text-gray-100",
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 text-gray-900 dark:text-white",
                   indicator === "dot" && "items-center"
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  <div className="text-gray-900 dark:text-gray-100">
+                  <div className="text-gray-900 dark:text-white">
                     {formatter(item.value, item.name, item, index, item.payload)}
                   </div>
                 ) : (
@@ -230,22 +230,22 @@ const ChartTooltipContent = React.forwardRef<
                     )}
                     <div
                       className={cn(
-                        "flex flex-1 justify-between leading-none text-gray-900 dark:text-gray-100",
+                        "flex flex-1 justify-between leading-none text-gray-900 dark:text-white",
                         nestLabel ? "items-end" : "items-center"
                       )}
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? (
-                          <div className="text-gray-900 dark:text-gray-100">
+                          <div className="text-white">
                             {tooltipLabel}
                           </div>
                         ) : null}
-                        <span className="text-gray-900 dark:text-gray-100">
+                        <span className="text-gray-900 dark:text-white">
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-gray-900 dark:text-gray-100">
+                        <span className="font-mono font-medium tabular-nums text-gray-900 dark:text-white">
                           {item.value.toLocaleString()}
                         </span>
                       )}
