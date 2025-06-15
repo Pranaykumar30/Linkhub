@@ -127,7 +127,7 @@ export const useAnalytics = () => {
     fetchAnalytics();
   }, [user]);
 
-  // Set up real-time subscriptions for analytics updates - always active when user is authenticated
+  // Set up real-time subscriptions for analytics updates
   useEffect(() => {
     if (!user?.id) return;
 
@@ -141,7 +141,7 @@ export const useAnalytics = () => {
       
       // Listen for link changes (click count updates)
       linksChannel = supabase
-        .channel(`analytics-links-${user.id}-${timestamp}`)
+        .channel(`analytics-links-realtime-${user.id}-${timestamp}`)
         .on(
           'postgres_changes',
           {
@@ -151,7 +151,7 @@ export const useAnalytics = () => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Analytics: Link updated:', payload);
+            console.log('Analytics: Link updated via realtime:', payload);
             fetchAnalytics();
           }
         )
@@ -159,9 +159,9 @@ export const useAnalytics = () => {
           console.log(`Analytics links subscription status: ${status}`);
         });
 
-      // Listen for new click records to catch public profile clicks
+      // Listen for new click records
       clicksChannel = supabase
-        .channel(`analytics-clicks-${user.id}-${timestamp}`)
+        .channel(`analytics-clicks-realtime-${user.id}-${timestamp}`)
         .on(
           'postgres_changes',
           {
@@ -170,7 +170,7 @@ export const useAnalytics = () => {
             table: 'link_clicks'
           },
           async (payload) => {
-            console.log('Analytics: New click recorded:', payload);
+            console.log('Analytics: New click recorded via realtime:', payload);
             // Check if this click belongs to user's links
             const { data: linkData } = await supabase
               .from('links')
@@ -189,7 +189,6 @@ export const useAnalytics = () => {
         });
     };
 
-    // Always setup subscriptions when user is authenticated
     setupRealtimeSubscriptions();
 
     return () => {
@@ -202,7 +201,7 @@ export const useAnalytics = () => {
         supabase.removeChannel(clicksChannel);
       }
     };
-  }, [user?.id]); // Only depend on user.id
+  }, [user?.id]);
 
   return {
     analytics,

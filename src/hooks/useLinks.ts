@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -226,7 +227,7 @@ export const useLinks = () => {
     fetchLinks();
   }, [user]);
 
-  // Set up real-time subscription for links - always active when user is authenticated
+  // Set up real-time subscription for links
   useEffect(() => {
     if (!user?.id) return;
 
@@ -234,23 +235,23 @@ export const useLinks = () => {
     
     const setupRealtimeSubscription = () => {
       const timestamp = Date.now();
-      const channelName = `links-changes-${user.id}-${timestamp}`;
+      const channelName = `links-realtime-${user.id}-${timestamp}`;
       
-      console.log(`Setting up realtime subscription: ${channelName}`);
+      console.log(`Setting up links realtime subscription: ${channelName}`);
       
       channel = supabase
         .channel(channelName)
         .on(
           'postgres_changes',
           {
-            event: 'UPDATE',
+            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
             schema: 'public',
             table: 'links',
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Links changed:', payload);
-            // Refetch to ensure consistency
+            console.log('Links realtime update received:', payload);
+            // Always refetch to ensure data consistency
             fetchLinks();
           }
         )
@@ -259,16 +260,15 @@ export const useLinks = () => {
         });
     };
 
-    // Always setup subscription when user is authenticated
     setupRealtimeSubscription();
 
     return () => {
       if (channel) {
-        console.log(`Cleaning up links subscription`);
+        console.log(`Cleaning up links subscription: ${channel.topic}`);
         supabase.removeChannel(channel);
       }
     };
-  }, [user?.id]); // Only depend on user.id, not links.length
+  }, [user?.id]);
 
   return {
     links,
