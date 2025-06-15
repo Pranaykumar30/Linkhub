@@ -147,7 +147,7 @@ const ChartTooltipContent = React.forwardRef<
       if (labelFormatter) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            <div className="dark:text-white text-gray-900">
+            <div className="text-gray-900 dark:text-white">
               {labelFormatter(value, payload)}
             </div>
           </div>
@@ -158,7 +158,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium dark:text-white text-gray-900", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium text-gray-900 dark:text-white", labelClassName)}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -180,9 +180,14 @@ const ChartTooltipContent = React.forwardRef<
         ref={ref}
         className={cn(
           "grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
-          "bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600",
+          "bg-white text-gray-900 border-gray-300",
+          "dark:bg-gray-900 dark:text-white dark:border-gray-600",
           className
         )}
+        style={{
+          backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff',
+          color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827',
+        }}
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
@@ -201,7 +206,7 @@ const ChartTooltipContent = React.forwardRef<
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
-                  <div className="text-gray-900 dark:text-white">
+                  <div className="text-gray-900 dark:text-white" style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}>
                     {formatter(item.value, item.name, item, index, item.payload)}
                   </div>
                 ) : (
@@ -239,16 +244,25 @@ const ChartTooltipContent = React.forwardRef<
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? (
-                          <div className="dark:text-white text-gray-900">
+                          <div 
+                            className="text-gray-900 dark:text-white"
+                            style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
+                          >
                             {tooltipLabel}
                           </div>
                         ) : null}
-                        <span className="text-gray-900 dark:text-white">
+                        <span 
+                          className="text-gray-900 dark:text-white"
+                          style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
+                        >
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-gray-900 dark:text-white">
+                        <span 
+                          className="font-mono font-medium tabular-nums text-gray-900 dark:text-white"
+                          style={{ color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#111827' }}
+                        >
                           {item.value.toLocaleString()}
                         </span>
                       )}
