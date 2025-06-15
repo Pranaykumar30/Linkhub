@@ -58,7 +58,7 @@ export const useAnalytics = () => {
       const activeLinks = links?.filter(link => link.is_active).length || 0;
       const totalClicks = links?.reduce((sum, link) => sum + link.click_count, 0) || 0;
 
-      console.log('Analytics - Total clicks:', totalClicks, 'Total links:', totalLinks);
+      console.log('Analytics - Total clicks from links table:', totalClicks, 'Total links:', totalLinks);
 
       // Get top performing links
       const topPerformingLinks = links
@@ -71,53 +71,71 @@ export const useAnalytics = () => {
           click_count: link.click_count,
         })) || [];
 
-      // Get clicks by date (last 30 days)
+      // Get clicks by date (last 30 days) - this uses link_clicks table for detailed analytics
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { data: clickData, error: clickError } = await supabase
-        .from('link_clicks')
-        .select('clicked_at, country')
-        .in('link_id', links?.map(link => link.id) || [])
-        .gte('clicked_at', thirtyDaysAgo.toISOString());
+      const linkIds = links?.map(link => link.id) || [];
+      
+      if (linkIds.length > 0) {
+        const { data: clickData, error: clickError } = await supabase
+          .from('link_clicks')
+          .select('clicked_at, country')
+          .in('link_id', linkIds)
+          .gte('clicked_at', thirtyDaysAgo.toISOString());
 
-      if (clickError) throw clickError;
-
-      // Process clicks by date
-      const clicksByDate = Array.from({ length: 30 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        const clicks = clickData?.filter(click => 
-          click.clicked_at.startsWith(dateStr)
-        ).length || 0;
-        return { date: dateStr, clicks };
-      }).reverse();
-
-      // Process clicks by country
-      const countryClickCounts = clickData?.reduce((acc, click) => {
-        if (click.country) {
-          acc[click.country] = (acc[click.country] || 0) + 1;
+        if (clickError) {
+          console.error('Error fetching click data:', clickError);
+        } else {
+          console.log('Found click records:', clickData?.length || 0);
         }
-        return acc;
-      }, {} as Record<string, number>) || {};
 
-      const clicksByCountry = Object.entries(countryClickCounts)
-        .map(([country, clicks]) => ({ country, clicks }))
-        .sort((a, b) => b.clicks - a.clicks)
-        .slice(0, 10);
+        // Process clicks by date
+        const clicksByDate = Array.from({ length: 30 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          const clicks = clickData?.filter(click => 
+            click.clicked_at.startsWith(dateStr)
+          ).length || 0;
+          return { date: dateStr, clicks };
+        }).reverse();
 
-      const newAnalytics = {
-        totalClicks,
-        totalLinks,
-        activeLinks,
-        topPerformingLinks,
-        clicksByDate,
-        clicksByCountry,
-      };
+        // Process clicks by country
+        const countryClickCounts = clickData?.reduce((acc, click) => {
+          if (click.country) {
+            acc[click.country] = (acc[click.country] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>) || {};
 
-      console.log('Analytics updated:', newAnalytics);
-      setAnalytics(newAnalytics);
+        const clicksByCountry = Object.entries(countryClickCounts)
+          .map(([country, clicks]) => ({ country, clicks }))
+          .sort((a, b) => b.clicks - a.clicks)
+          .slice(0, 10);
+
+        const newAnalytics = {
+          totalClicks,
+          totalLinks,
+          activeLinks,
+          topPerformingLinks,
+          clicksByDate,
+          clicksByCountry,
+        };
+
+        console.log('Analytics updated:', newAnalytics);
+        setAnalytics(newAnalytics);
+      } else {
+        // No links, set empty analytics
+        setAnalytics({
+          totalClicks,
+          totalLinks,
+          activeLinks,
+          topPerformingLinks,
+          clicksByDate: [],
+          clicksByCountry: [],
+        });
+      }
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast({
@@ -164,7 +182,7 @@ export const useAnalytics = () => {
         console.log(`Analytics links subscription status: ${status}`);
       });
 
-    // Listen for new click records
+    // Listen for new click records in link_clicks table
     const clicksChannel = supabase
       .channel(clicksChannelName)
       .on(
@@ -186,7 +204,10 @@ export const useAnalytics = () => {
           
           if (linkData?.user_id === user.id) {
             console.log('Click belongs to current user, refreshing analytics');
-            fetchAnalytics();
+            // Small delay to ensure the links table click_count is also updated
+            setTimeout(() => {
+              fetchAnalytics();
+            }, 500);
           }
         }
       )
