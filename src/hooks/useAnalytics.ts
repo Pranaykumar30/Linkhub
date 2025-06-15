@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,7 +45,7 @@ export const useAnalytics = () => {
     try {
       console.log('Fetching analytics for user:', user.id);
       
-      // Get user's links
+      // Get user's links with fresh data
       const { data: links, error: linksError } = await supabase
         .from('links')
         .select('*')
@@ -56,27 +55,32 @@ export const useAnalytics = () => {
 
       const totalLinks = links?.length || 0;
       const activeLinks = links?.filter(link => link.is_active).length || 0;
-      const totalClicks = links?.reduce((sum, link) => sum + link.click_count, 0) || 0;
+      
+      // Calculate total clicks from the links table (this should be the source of truth)
+      const totalClicks = links?.reduce((sum, link) => sum + (link.click_count || 0), 0) || 0;
 
       console.log('Analytics - Total clicks from links table:', totalClicks, 'Total links:', totalLinks);
 
       // Get top performing links
       const topPerformingLinks = links
-        ?.sort((a, b) => b.click_count - a.click_count)
+        ?.sort((a, b) => (b.click_count || 0) - (a.click_count || 0))
         .slice(0, 5)
         .map(link => ({
           id: link.id,
           title: link.title,
           url: link.url,
-          click_count: link.click_count,
+          click_count: link.click_count || 0,
         })) || [];
 
-      // Get clicks by date (last 30 days) - this uses link_clicks table for detailed analytics
+      // Get detailed click data for charts (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const linkIds = links?.map(link => link.id) || [];
       
+      let clicksByDate: Array<{ date: string; clicks: number }> = [];
+      let clicksByCountry: Array<{ country: string; clicks: number }> = [];
+
       if (linkIds.length > 0) {
         const { data: clickData, error: clickError } = await supabase
           .from('link_clicks')
@@ -91,7 +95,7 @@ export const useAnalytics = () => {
         }
 
         // Process clicks by date
-        const clicksByDate = Array.from({ length: 30 }, (_, i) => {
+        clicksByDate = Array.from({ length: 30 }, (_, i) => {
           const date = new Date();
           date.setDate(date.getDate() - i);
           const dateStr = date.toISOString().split('T')[0];
@@ -109,33 +113,23 @@ export const useAnalytics = () => {
           return acc;
         }, {} as Record<string, number>) || {};
 
-        const clicksByCountry = Object.entries(countryClickCounts)
+        clicksByCountry = Object.entries(countryClickCounts)
           .map(([country, clicks]) => ({ country, clicks }))
           .sort((a, b) => b.clicks - a.clicks)
           .slice(0, 10);
-
-        const newAnalytics = {
-          totalClicks,
-          totalLinks,
-          activeLinks,
-          topPerformingLinks,
-          clicksByDate,
-          clicksByCountry,
-        };
-
-        console.log('Analytics updated:', newAnalytics);
-        setAnalytics(newAnalytics);
-      } else {
-        // No links, set empty analytics
-        setAnalytics({
-          totalClicks,
-          totalLinks,
-          activeLinks,
-          topPerformingLinks,
-          clicksByDate: [],
-          clicksByCountry: [],
-        });
       }
+
+      const newAnalytics = {
+        totalClicks,
+        totalLinks,
+        activeLinks,
+        topPerformingLinks,
+        clicksByDate,
+        clicksByCountry,
+      };
+
+      console.log('Analytics updated:', newAnalytics);
+      setAnalytics(newAnalytics);
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast({

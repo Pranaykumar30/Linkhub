@@ -102,7 +102,7 @@ const PublicProfile = () => {
     try {
       console.log('Recording click for link:', link.id);
       
-      // Record click analytics with proper error handling
+      // Record click analytics first
       const { error: analyticsError } = await supabase
         .from('link_clicks')
         .insert({
@@ -118,20 +118,28 @@ const PublicProfile = () => {
         console.log('Click analytics recorded successfully');
       }
 
-      // Update click count in links table
-      const { error: updateError } = await supabase
-        .from('links')
-        .update({ 
-          click_count: link.click_count + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', link.id);
+      // Update click count using the database function for consistency
+      const { error: updateError } = await supabase.rpc('increment_click_count', {
+        link_id: link.id
+      });
 
       if (updateError) {
-        console.error('Error updating click count:', updateError);
-      } else {
-        console.log('Click count updated successfully');
+        console.error('Error incrementing click count:', updateError);
+        // Fallback to manual update
+        const { error: fallbackError } = await supabase
+          .from('links')
+          .update({ 
+            click_count: link.click_count + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', link.id);
+
+        if (fallbackError) {
+          console.error('Error in fallback click count update:', fallbackError);
+        }
       }
+
+      console.log('Click count updated successfully');
     } catch (error) {
       console.error('Error in handleLinkClick:', error);
     }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -186,47 +185,55 @@ export const useLinks = () => {
   const recordClick = async (linkId: string) => {
     try {
       console.log('useLinks: Recording click for link:', linkId);
-      const currentLink = links.find(l => l.id === linkId);
-      const newClickCount = (currentLink?.click_count || 0) + 1;
-
-      // Optimistically update the local state
-      setLinks(prev => prev.map(link => 
-        link.id === linkId 
-          ? { ...link, click_count: newClickCount }
-          : link
-      ));
-
-      // Update the database with explicit updated_at timestamp
-      const { error: updateError } = await supabase
-        .from('links')
-        .update({ 
-          click_count: newClickCount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', linkId);
-
-      if (updateError) {
-        console.error('Error updating click count:', updateError);
-        // Revert optimistic update on error
-        fetchLinks();
-        return;
-      }
-
-      console.log('useLinks: Click count updated successfully');
-
-      // Record click analytics
-      await supabase
+      
+      // First, insert the click record
+      const { error: clickError } = await supabase
         .from('link_clicks')
         .insert({
           link_id: linkId,
-          ip_address: null,
           user_agent: navigator.userAgent,
-          referer: document.referrer,
+          referer: document.referrer || null,
+          clicked_at: new Date().toISOString(),
         });
+
+      if (clickError) {
+        console.error('Error recording click analytics:', clickError);
+        return;
+      }
+
+      console.log('Click analytics recorded successfully');
+
+      // Then update the click count in links table using the database function
+      const { error: updateError } = await supabase.rpc('increment_click_count', {
+        link_id: linkId
+      });
+
+      if (updateError) {
+        console.error('Error incrementing click count:', updateError);
+        // Fallback to manual update if function fails
+        const currentLink = links.find(l => l.id === linkId);
+        const newClickCount = (currentLink?.click_count || 0) + 1;
+
+        const { error: fallbackError } = await supabase
+          .from('links')
+          .update({ 
+            click_count: newClickCount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', linkId);
+
+        if (fallbackError) {
+          console.error('Error in fallback click count update:', fallbackError);
+          return;
+        }
+      }
+
+      console.log('Click count updated successfully');
+      
+      // Refresh links to get updated data
+      fetchLinks();
     } catch (error) {
       console.error('Error recording click:', error);
-      // Revert optimistic update on error
-      fetchLinks();
     }
   };
 
