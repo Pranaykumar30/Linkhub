@@ -240,8 +240,11 @@ export const useLinks = () => {
 
     console.log('Setting up links realtime subscription for user:', user.id);
     
+    // Create unique channel name with timestamp
+    const channelName = `links-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel(`links-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

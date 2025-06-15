@@ -105,7 +105,8 @@ export const useProfile = () => {
     let channel: any = null;
     
     const setupRealtimeSubscription = () => {
-      const channelName = `profile-changes-${user.id}`;
+      // Create unique channel name with timestamp to avoid conflicts
+      const channelName = `profile-changes-${user.id}-${Date.now()}`;
       
       console.log(`Setting up realtime subscription: ${channelName}`);
       
