@@ -19,7 +19,9 @@ interface TeamMember {
   user_id: string;
   role: string;
   status: string;
+  invited_at?: string;
   joined_at?: string;
+  created_at: string;
   profiles?: {
     full_name?: string;
     username?: string;
