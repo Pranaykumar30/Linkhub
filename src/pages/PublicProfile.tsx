@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -97,25 +98,51 @@ const PublicProfile = () => {
   }, [customUrl]);
 
   const handleLinkClick = async (link: PublicLink) => {
-    // Record the click in the background without updating UI
     try {
-      // Get current click count from database
-      const { data: currentLink } = await supabase
+      console.log('Public profile: Recording click for link:', link.id);
+      
+      // Update click count optimistically
+      setLinks(prev => prev.map(l => 
+        l.id === link.id 
+          ? { ...l, click_count: l.click_count + 1 }
+          : l
+      ));
+
+      // Get current click count and increment it
+      const { data: currentLink, error: fetchError } = await supabase
         .from('links')
         .select('click_count')
         .eq('id', link.id)
         .single();
 
+      if (fetchError) {
+        console.error('Error fetching current click count:', fetchError);
+        return;
+      }
+
       const newClickCount = (currentLink?.click_count || 0) + 1;
 
-      // Update click count in database
-      await supabase
+      // Update the click count in the database - this will trigger real-time updates
+      const { error: updateError } = await supabase
         .from('links')
         .update({ click_count: newClickCount })
         .eq('id', link.id);
 
-      // Record click analytics
-      await supabase
+      if (updateError) {
+        console.error('Error updating click count:', updateError);
+        // Revert optimistic update on error
+        setLinks(prev => prev.map(l => 
+          l.id === link.id 
+            ? { ...l, click_count: l.click_count - 1 }
+            : l
+        ));
+        return;
+      }
+
+      console.log('Public profile: Click count updated successfully');
+
+      // Record click analytics - this will trigger real-time updates for analytics
+      const { error: analyticsError } = await supabase
         .from('link_clicks')
         .insert({
           link_id: link.id,
@@ -123,9 +150,20 @@ const PublicProfile = () => {
           referer: document.referrer,
         });
 
-      console.log('Click recorded successfully');
+      if (analyticsError) {
+        console.error('Error recording click analytics:', analyticsError);
+      } else {
+        console.log('Public profile: Click analytics recorded successfully');
+      }
+
     } catch (error) {
-      console.error('Error recording click:', error);
+      console.error('Error in handleLinkClick:', error);
+      // Revert optimistic update on error
+      setLinks(prev => prev.map(l => 
+        l.id === link.id 
+          ? { ...l, click_count: l.click_count - 1 }
+          : l
+      ));
     }
 
     // Navigate to the link

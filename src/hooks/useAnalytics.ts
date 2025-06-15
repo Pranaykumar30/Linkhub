@@ -127,14 +127,23 @@ export const useAnalytics = () => {
     fetchAnalytics();
   }, [user]);
 
-  // Set up real-time subscriptions for analytics updates
+  // Set up real-time subscriptions for analytics updates with improved reliability
   useEffect(() => {
     if (!user?.id) return;
 
     let linksChannel: any = null;
     let clicksChannel: any = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
     
     const setupRealtimeSubscriptions = () => {
+      // Clean up existing channels
+      if (linksChannel) {
+        supabase.removeChannel(linksChannel);
+      }
+      if (clicksChannel) {
+        supabase.removeChannel(clicksChannel);
+      }
+
       console.log('Setting up analytics realtime subscriptions');
       
       const timestamp = Date.now();
@@ -157,6 +166,16 @@ export const useAnalytics = () => {
         )
         .subscribe((status) => {
           console.log(`Analytics links subscription status: ${status}`);
+          
+          if (status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.log('Analytics links subscription failed, attempting reconnect...');
+            if (!reconnectTimeout) {
+              reconnectTimeout = setTimeout(() => {
+                setupRealtimeSubscriptions();
+                reconnectTimeout = null;
+              }, 5000);
+            }
+          }
         });
 
       // Listen for new click records
@@ -186,12 +205,25 @@ export const useAnalytics = () => {
         )
         .subscribe((status) => {
           console.log(`Analytics clicks subscription status: ${status}`);
+          
+          if (status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.log('Analytics clicks subscription failed, attempting reconnect...');
+            if (!reconnectTimeout) {
+              reconnectTimeout = setTimeout(() => {
+                setupRealtimeSubscriptions();
+                reconnectTimeout = null;
+              }, 5000);
+            }
+          }
         });
     };
 
     setupRealtimeSubscriptions();
 
     return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (linksChannel) {
         console.log('Cleaning up analytics links subscription');
         supabase.removeChannel(linksChannel);

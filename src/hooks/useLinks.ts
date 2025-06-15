@@ -227,13 +227,19 @@ export const useLinks = () => {
     fetchLinks();
   }, [user]);
 
-  // Set up real-time subscription for links
+  // Set up real-time subscription for links with improved reliability
   useEffect(() => {
     if (!user?.id) return;
 
     let channel: any = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
     
     const setupRealtimeSubscription = () => {
+      // Clean up existing channel if any
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+
       const timestamp = Date.now();
       const channelName = `links-realtime-${user.id}-${timestamp}`;
       
@@ -257,12 +263,23 @@ export const useLinks = () => {
         )
         .subscribe((status) => {
           console.log(`Links subscription status: ${status}`);
+          
+          // Handle subscription failures and timeouts
+          if (status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.log('Links subscription failed, attempting reconnect in 5 seconds...');
+            reconnectTimeout = setTimeout(() => {
+              setupRealtimeSubscription();
+            }, 5000);
+          }
         });
     };
 
     setupRealtimeSubscription();
 
     return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (channel) {
         console.log(`Cleaning up links subscription: ${channel.topic}`);
         supabase.removeChannel(channel);
