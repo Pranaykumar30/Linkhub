@@ -21,11 +21,17 @@ export const themes: ThemeConfig[] = [
 
 export const useTheme = () => {
   const { limits } = useSubscriptionLimits();
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Initialize from localStorage immediately
+  const [theme, setTheme] = useState<Theme>('light');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize theme from localStorage only once
+  useEffect(() => {
     const savedTheme = localStorage.getItem('linkhub-theme') as Theme;
-    return savedTheme && themes.find(t => t.value === savedTheme) ? savedTheme : 'light';
-  });
+    if (savedTheme && themes.find(t => t.value === savedTheme)) {
+      setTheme(savedTheme);
+    }
+    setIsInitialized(true);
+  }, []);
 
   // Check if user can access premium themes
   const canAccessPremiumThemes = limits.subscribed && (
@@ -35,6 +41,8 @@ export const useTheme = () => {
 
   // Apply theme to document immediately on mount and theme changes
   useEffect(() => {
+    if (!isInitialized) return;
+    
     const root = document.documentElement;
     
     // Remove all theme classes
@@ -46,16 +54,19 @@ export const useTheme = () => {
     } else {
       root.classList.add('dark', `theme-${theme}`);
     }
-  }, [theme]);
+  }, [theme, isInitialized]);
 
-  // Check theme access when subscription limits change
+  // Check theme access when subscription limits change, but only reset if necessary
   useEffect(() => {
+    if (!isInitialized) return;
+    
     const themeConfig = themes.find(t => t.value === theme);
     if (themeConfig?.premium && !canAccessPremiumThemes) {
+      console.log('Theme access revoked, reverting to light theme');
       setTheme('light');
       localStorage.setItem('linkhub-theme', 'light');
     }
-  }, [canAccessPremiumThemes, theme]);
+  }, [canAccessPremiumThemes, theme, isInitialized]);
 
   const changeTheme = (newTheme: Theme) => {
     const themeConfig = themes.find(t => t.value === newTheme);
@@ -65,6 +76,7 @@ export const useTheme = () => {
       return false; // Theme change not allowed
     }
     
+    console.log('Changing theme to:', newTheme);
     setTheme(newTheme);
     localStorage.setItem('linkhub-theme', newTheme);
     return true;

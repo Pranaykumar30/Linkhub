@@ -146,7 +146,7 @@ const ChartTooltipContent = React.forwardRef<
 
       if (labelFormatter) {
         return (
-          <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>
+          <div className={cn("font-medium", labelClassName)} style={{ color: '#1f2937' }}>
             {labelFormatter(value, payload)}
           </div>
         )
@@ -156,7 +156,7 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      return <div className={cn("font-medium text-gray-900 dark:text-gray-100", labelClassName)}>{value}</div>
+      return <div className={cn("font-medium", labelClassName)} style={{ color: '#1f2937' }}>{value}</div>
     }, [
       label,
       labelFormatter,
@@ -177,9 +177,14 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs shadow-xl",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
           className
         )}
+        style={{ 
+          backgroundColor: '#ffffff',
+          borderColor: '#e5e7eb',
+          color: '#1f2937'
+        }}
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
@@ -192,7 +197,7 @@ const ChartTooltipContent = React.forwardRef<
               <div
                 key={item.dataKey}
                 className={cn(
-                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-gray-500 dark:[&>svg]:text-gray-400",
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                   indicator === "dot" && "items-center"
                 )}
               >
@@ -232,12 +237,12 @@ const ChartTooltipContent = React.forwardRef<
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-gray-900 dark:text-gray-100">
+                        <span style={{ color: '#1f2937' }}>
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-gray-900 dark:text-gray-100">
+                        <span className="font-mono font-medium tabular-nums" style={{ color: '#1f2937' }}>
                           {item.value.toLocaleString()}
                         </span>
                       )}
