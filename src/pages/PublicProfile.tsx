@@ -98,9 +98,9 @@ const PublicProfile = () => {
 
   const handleLinkClick = async (link: PublicLink) => {
     try {
-      console.log('PublicProfile: Starting click recording for link:', link.id);
+      console.log('PublicProfile: Recording click for link:', link.id);
       
-      // First, record the click analytics
+      // Record click analytics first
       const { error: analyticsError } = await supabase
         .from('link_clicks')
         .insert({
@@ -111,33 +111,27 @@ const PublicProfile = () => {
 
       if (analyticsError) {
         console.error('Error recording click analytics:', analyticsError);
-      } else {
-        console.log('PublicProfile: Click analytics recorded successfully');
       }
 
-      // Then update the click count - use RPC or direct update
-      const { data: updateResult, error: updateError } = await supabase.rpc('increment_click_count', { 
-        link_id: link.id 
-      });
+      // Update click count directly
+      const { error: updateError } = await supabase
+        .from('links')
+        .update({ 
+          click_count: link.click_count + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', link.id);
 
       if (updateError) {
-        console.error('RPC failed, trying direct update:', updateError);
-        // Fallback to direct update
-        const { error: directUpdateError } = await supabase
-          .from('links')
-          .update({ 
-            click_count: link.click_count + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', link.id);
-
-        if (directUpdateError) {
-          console.error('Direct update also failed:', directUpdateError);
-        } else {
-          console.log('PublicProfile: Direct update successful');
-        }
+        console.error('Error updating click count:', updateError);
       } else {
-        console.log('PublicProfile: RPC update successful:', updateResult);
+        console.log('PublicProfile: Click count updated successfully');
+        // Update local state optimistically
+        setLinks(prev => prev.map(l => 
+          l.id === link.id 
+            ? { ...l, click_count: l.click_count + 1 }
+            : l
+        ));
       }
 
     } catch (error) {
