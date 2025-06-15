@@ -27,19 +27,19 @@ const ThemeSwitcher = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-card-foreground">
           <Palette className="h-5 w-5" />
           Theme Settings
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           Customize your LinkHub appearance. Premium themes available for Premium and Enterprise users.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Current Theme:</label>
+          <label className="text-sm font-medium text-card-foreground">Current Theme:</label>
           <div className="flex items-center gap-2">
-            <span className="text-sm">{currentThemeConfig?.name}</span>
+            <span className="text-sm text-card-foreground">{currentThemeConfig?.name}</span>
             {currentThemeConfig?.premium && (
               <Badge variant="default" className="text-xs">
                 <Crown className="h-3 w-3 mr-1" />
@@ -50,7 +50,7 @@ const ThemeSwitcher = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Switch Theme:</label>
+          <label className="text-sm font-medium text-card-foreground">Switch Theme:</label>
           <Select value={theme} onValueChange={handleThemeChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select a theme" />
@@ -74,7 +74,7 @@ const ThemeSwitcher = () => {
           <div className="p-3 rounded-md bg-muted border border-dashed">
             <div className="flex items-center gap-2 text-sm">
               <Lock className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Premium Themes Locked</span>
+              <span className="font-medium text-card-foreground">Premium Themes Locked</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Upgrade to Premium or Enterprise to unlock Ocean Blue, Forest Green, and Royal Purple themes.

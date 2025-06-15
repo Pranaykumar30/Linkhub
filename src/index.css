@@ -98,6 +98,9 @@
     --border: 213 27% 82%;
     --input: 213 27% 82%;
     --ring: 217 91% 60%;
+    --foreground: 217 91% 20%;
+    --card-foreground: 217 91% 20%;
+    --popover-foreground: 217 91% 20%;
   }
 
   /* Premium Theme: Forest Green */
@@ -113,6 +116,9 @@
     --border: 138 76% 94%;
     --input: 138 76% 94%;
     --ring: 142 71% 45%;
+    --foreground: 142 71% 25%;
+    --card-foreground: 142 71% 25%;
+    --popover-foreground: 142 71% 25%;
   }
 
   /* Premium Theme: Royal Purple */
@@ -128,6 +134,9 @@
     --border: 270 20% 95%;
     --input: 270 20% 95%;
     --ring: 263 70% 50%;
+    --foreground: 263 70% 30%;
+    --card-foreground: 263 70% 30%;
+    --popover-foreground: 263 70% 30%;
   }
 }
 

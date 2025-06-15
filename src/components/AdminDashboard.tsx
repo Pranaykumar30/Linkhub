@@ -64,7 +64,7 @@ const AdminDashboard = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Dashboard</h1>
             <p className="text-muted-foreground">
               Manage users, subscriptions, and support tickets
             </p>

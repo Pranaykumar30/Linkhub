@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -97,8 +98,8 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>Please sign in to access your dashboard</CardDescription>
+            <CardTitle className="text-foreground">Access Denied</CardTitle>
+            <CardDescription className="text-muted-foreground">Please sign in to access your dashboard</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <AuthButton />
@@ -144,7 +145,7 @@ const Dashboard = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">L</span>
               </div>
-              <h1 className="text-xl font-semibold">LinkHub Dashboard</h1>
+              <h1 className="text-xl font-semibold text-foreground">LinkHub Dashboard</h1>
             </div>
             <div className="flex items-center gap-2">
               <Link to="/links">
@@ -185,10 +186,10 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <>
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-xl text-card-foreground">
                       {profile?.full_name || 'No name set'}
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                       @{profile?.username || 'no-username'}
                     </CardDescription>
                     {(profile?.custom_url && subscription.subscribed) && (
@@ -220,7 +221,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-2 text-sm">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{user.email}</span>
+                        <span className="truncate text-card-foreground">{user.email}</span>
                       </div>
                       
                       {profile?.website && (
@@ -240,7 +241,7 @@ const Dashboard = () => {
                       {profile?.created_at && (
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>Joined {formatDate(profile.created_at)}</span>
+                          <span className="text-card-foreground">Joined {formatDate(profile.created_at)}</span>
                         </div>
                       )}
                     </div>
@@ -296,22 +297,22 @@ const Dashboard = () => {
                 {/* Welcome Card */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}!</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-card-foreground">Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}!</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Manage your links and track their performance from your LinkHub dashboard.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 md:grid-cols-3">
                       <div className="space-y-2">
-                        <h4 className="font-medium">Account Status</h4>
+                        <h4 className="font-medium text-card-foreground">Account Status</h4>
                         <Badge variant="secondary">
                           {user.email_confirmed_at ? 'Email Verified' : 'Email Pending'}
                         </Badge>
                       </div>
                       
                       <div className="space-y-2">
-                        <h4 className="font-medium">Current Plan</h4>
+                        <h4 className="font-medium text-card-foreground">Current Plan</h4>
                         <div className="flex items-center gap-2">
                           <Badge variant={subscription.subscribed ? "default" : "outline"}>
                             {subscription.subscription_tier || 'Free'}
@@ -325,7 +326,7 @@ const Dashboard = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <h4 className="font-medium">Plan Features</h4>
+                        <h4 className="font-medium text-card-foreground">Plan Features</h4>
                         <div className="flex flex-wrap gap-1">
                           {limits.customThemesEnabled && <Badge variant="secondary" className="text-xs">Themes</Badge>}
                           {limits.linkSchedulingEnabled && <Badge variant="secondary" className="text-xs">Scheduling</Badge>}
@@ -340,36 +341,36 @@ const Dashboard = () => {
                 {/* Feature Overview by Plan */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Available Features</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-card-foreground">Available Features</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Based on your {subscription.subscription_tier || 'Free'} plan
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="flex items-center justify-between p-3 border rounded">
-                        <span>Link Scheduling</span>
+                        <span className="text-card-foreground">Link Scheduling</span>
                         <Badge variant={limits.linkSchedulingEnabled ? "default" : "secondary"}>
                           {limits.linkSchedulingEnabled ? 'Available' : 'Premium+'}
                         </Badge>
                       </div>
                       
                       <div className="flex items-center justify-between p-3 border rounded">
-                        <span>Custom Domains</span>
+                        <span className="text-card-foreground">Custom Domains</span>
                         <Badge variant={limits.customDomainEnabled ? "default" : "secondary"}>
                           {limits.customDomainEnabled ? 'Available' : 'Premium+'}
                         </Badge>
                       </div>
                       
                       <div className="flex items-center justify-between p-3 border rounded">
-                        <span>Team Collaboration</span>
+                        <span className="text-card-foreground">Team Collaboration</span>
                         <Badge variant={limits.teamCollaborationEnabled ? "default" : "secondary"}>
                           {limits.teamCollaborationEnabled ? 'Available' : 'Enterprise'}
                         </Badge>
                       </div>
                       
                       <div className="flex items-center justify-between p-3 border rounded">
-                        <span>API Access</span>
+                        <span className="text-card-foreground">API Access</span>
                         <Badge variant={limits.apiAccessEnabled ? "default" : "secondary"}>
                           {limits.apiAccessEnabled ? 'Available' : 'Enterprise'}
                         </Badge>
@@ -381,8 +382,8 @@ const Dashboard = () => {
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-card-foreground">Quick Actions</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Common tasks and features you might need.
                     </CardDescription>
                   </CardHeader>
@@ -446,11 +447,11 @@ const Dashboard = () => {
               <TabsContent value="team">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-card-foreground">
                       <Users className="h-5 w-5" />
                       Team Collaboration
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-muted-foreground">
                       Manage team members and collaboration features
                     </CardDescription>
                   </CardHeader>
@@ -458,7 +459,7 @@ const Dashboard = () => {
                     {!limits.teamCollaborationEnabled ? (
                       <div className="text-center py-8">
                         <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Team Collaboration</h3>
+                        <h3 className="text-lg font-semibold mb-2 text-card-foreground">Team Collaboration</h3>
                         <p className="text-muted-foreground mb-4">
                           Team collaboration features are available for Enterprise subscribers.
                         </p>
@@ -469,7 +470,7 @@ const Dashboard = () => {
                     ) : (
                       <div className="text-center py-8">
                         <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Team Features Coming Soon</h3>
+                        <h3 className="text-lg font-semibold mb-2 text-card-foreground">Team Features Coming Soon</h3>
                         <p className="text-muted-foreground">
                           Team collaboration features are currently in development.
                         </p>
@@ -495,7 +496,7 @@ const Dashboard = () => {
                 <div className="space-y-6">
                   <AccountSettings />
                   <div>
-                    <h2 className="text-2xl font-bold mb-2">Testing Tools</h2>
+                    <h2 className="text-2xl font-bold mb-2 text-foreground">Testing Tools</h2>
                     <p className="text-muted-foreground mb-6">
                       Development and testing utilities for the application.
                     </p>
