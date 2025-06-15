@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,7 @@ import ThemeSwitcher from '@/components/ThemeSwitcher';
 import CustomDomainManager from '@/components/CustomDomainManager';
 import ApiKeyManager from '@/components/ApiKeyManager';
 import SupportCenter from '@/components/SupportCenter';
+import TeamCollaboration from '@/components/TeamCollaboration';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 
 interface SubscriptionData {
@@ -445,18 +445,18 @@ const Dashboard = () => {
               </TabsContent>
 
               <TabsContent value="team">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-card-foreground">
-                      <Users className="h-5 w-5" />
-                      Team Collaboration
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Manage team members and collaboration features
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {!limits.teamCollaborationEnabled ? (
+                {!limits.teamCollaborationEnabled ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-card-foreground">
+                        <Users className="h-5 w-5" />
+                        Team Collaboration
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Manage team members and collaboration features
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                       <div className="text-center py-8">
                         <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-semibold mb-2 text-card-foreground">Team Collaboration</h3>
@@ -467,17 +467,11 @@ const Dashboard = () => {
                           Upgrade to Enterprise
                         </Button>
                       </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2 text-card-foreground">Team Features Coming Soon</h3>
-                        <p className="text-muted-foreground">
-                          Team collaboration features are currently in development.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <TeamCollaboration />
+                )}
               </TabsContent>
 
               <TabsContent value="api">
