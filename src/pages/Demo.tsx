@@ -130,7 +130,7 @@ const Demo = () => {
                   onEnded={() => setIsPlaying(false)}
                 >
                   {/* Updated to use your actual video file name */}
-                  <source src="/demo-video" type="video/mp4" />
+                  <source src="public/demo-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
 
