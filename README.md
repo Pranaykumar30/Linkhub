@@ -191,7 +191,7 @@ The application can be deployed to any static hosting service:
 ![analytics](public/Analytics.png)
 
 ### Mobile View
-![homepage](public/Homepage.png)
+![mobile](public/mobile.jpg)
 
 ## 🤝 Contributing
 
