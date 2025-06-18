@@ -179,19 +179,19 @@ The application can be deployed to any static hosting service:
 ## 📸 Screenshots
 
 ### Homepage
-*[Screenshot of the beautiful landing page will be added here]*
+![homepage](public/Homepage.png)
 
 ### Dashboard
-*[Screenshot of the user dashboard with link management will be added here]*
+![dashboard](public/Dashboard.png)
 
 ### Public Profile
-*[Screenshot of a sample public profile page will be added here]*
+![publicprofile](public/Publicprofile.png)
 
 ### Analytics
-*[Screenshot of the analytics dashboard will be added here]*
+![analytics](public/Analytics.png)
 
 ### Mobile View
-*[Screenshot showing mobile responsiveness will be added here]*
+![homepage](public/Homepage.png)
 
 ## 🤝 Contributing
 
