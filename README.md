@@ -102,8 +102,8 @@ LinkHub is a modern, powerful link-in-bio solution that allows creators, entrepr
 
 1. **Clone the repository**
    ```bash
-   git clone <YOUR_GIT_URL>
-   cd <YOUR_PROJECT_NAME>
+   git clone https://github.com/Pranaykumar30/Linkhub.git
+   cd linkhub
    ```
 
 2. **Install dependencies**
@@ -209,7 +209,7 @@ This project is built with Lovable and follows their terms of service.
 
 ## 🔗 Links
 
-- **Live Demo**: [View Demo](your-demo-url)
+- **Live Demo**: [View Demo](https://linkhub-center.lovable.app)
 - **Project Dashboard**: [Lovable Project](https://lovable.dev/projects/7c17c38c-6819-478e-955a-9034e9440e68)
 
 ---
