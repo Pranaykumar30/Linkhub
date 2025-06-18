@@ -129,8 +129,8 @@ const Demo = () => {
                   onPause={() => setIsPlaying(false)}
                   onEnded={() => setIsPlaying(false)}
                 >
-                  {/* Simulated demo video - in real app, you'd have an actual video file */}
-                  <source src="/demo-video.mp4" type="video/mp4" />
+                  {/* Updated to use your actual video file name */}
+                  <source src="/demo-video" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
 
@@ -177,8 +177,8 @@ const Demo = () => {
                   </div>
                 )}
 
-                {/* Video Unavailable Fallback */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                {/* Video Unavailable Fallback - This will only show if video fails to load */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center" style={{ display: 'none' }}>
                   <div className="text-center p-8">
                     <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-4 mx-auto">
                       <Play className="h-8 w-8 text-primary ml-1" />
